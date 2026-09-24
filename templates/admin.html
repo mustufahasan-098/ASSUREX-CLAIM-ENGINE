@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Admin — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("📊", "Administrator Analytics", "Fleet-wide claim intelligence — outcomes, model behavior, duplicates, and trends") }}
+
+{% if empty %}
+  {{ ui.empty_state("📭", "No claims yet", "Analytics populate as claims are submitted.") }}
+{% else %}
+
+{{ ui.stat_row([
+  {"label": "Total claims", "value": total, "icon": "📁", "tone": "neutral"},
+  {"label": "Likely valid", "value": by_final.get("Likely Valid", 0), "icon": "✅", "tone": "valid"},
+  {"label": "Likely invalid", "value": by_final.get("Likely Invalid", 0), "icon": "⛔", "tone": "invalid"},
+  {"label": "Manual review", "value": pending, "icon": "👤", "tone": "review"},
+  {"label": "Disagreements", "value": disagreements|length, "icon": "🔀", "tone": "invalid" if disagreements else "neutral"}
+]) }}
+
+{{ ui.section("🥧", "Final decisions") }}
+<div class="ax-card">
+  {% for label, val, tone, pct in chart %}
+  <div style="display:grid; grid-template-columns:190px 1fr 52px; align-items:center; gap:12px; margin:9px 0;">
+    <div style="font-size:.86rem; color:var(--t-mid);">{{ label }}</div>
+    <div class="ax-bar-track"><div class="ax-bar-fill ax-bar-fill--{{ tone }}" style="width: {{ pct }}%;"></div></div>
+    <div style="font-family:var(--mono); font-size:.8rem; text-align:right; color:var(--t-hi);">{{ val }}</div>
+  </div>
+  {% endfor %}
+  <div style="margin-top:14px;">
+    {{ ui.kv_grid([("Avg Python confidence", "%.0f"|format(avg_py*100) ~ "%"), ("Avg TM confidence", "%.0f"|format(avg_tm*100) ~ "%")]) }}
+  </div>
+</div>
+
+{{ ui.section("🔀", "Model disagreement monitor") }}
+{% if disagreements %}
+<div class="ax-card" style="overflow-x:auto;">
+  <table class="ax-table">
+    <thead><tr><th>Claim</th><th>Python</th><th>Teachable Machine</th><th>Diff</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for c in disagreements %}
+      <tr><td class="ax-table-strong"><a href="{{ url_for('claim_detail', cid=c.claim_id) }}">{{ c.claim_id }}</a></td>
+        <td>{{ c.python_pred }}</td><td>{{ c.tm_pred }}</td>
+        <td>{{ "%.3f"|format(c.conf_diff|float) }}</td><td>{{ c.status }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p style="font-size:.86rem; color:var(--t-low);">No disagreements — both models agree on every claim so far.</p>{% endif %}
+
+{{ ui.section("🕵️", "Duplicate & fraud indicators") }}
+{% if dupes %}
+<div class="ax-card" style="overflow-x:auto;">
+  <table class="ax-table">
+    <thead><tr><th>Claim</th><th>Indicators</th></tr></thead>
+    <tbody>{% for c in dupes %}<tr><td class="ax-table-strong">{{ c.claim_id }}</td><td>{{ c.duplicates }}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% else %}<p style="font-size:.86rem; color:var(--t-low);">No duplicate indicators detected.</p>{% endif %}
+
+{{ ui.section("👥", "Users") }}
+<div class="ax-card" style="overflow-x:auto;">
+  <table class="ax-table">
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+    <tbody>{% for u in users %}<tr><td class="ax-table-strong">{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+
+{{ ui.section("🧾", "Audit trail (latest 200)") }}
+<div class="ax-card" style="overflow-x:auto; max-height:420px; overflow-y:auto;">
+  <table class="ax-table">
+    <thead><tr><th>Time</th><th>Actor</th><th>Action</th></tr></thead>
+    <tbody>{% for a in audit[:200] %}<tr><td>{{ a.ts }}</td><td>{{ a.actor }}</td><td>{{ a.action }}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+
+{{ ui.section("⬇️", "Data export") }}
+<a class="ax-btn ax-btn--primary" href="{{ url_for('admin_export') }}">⬇️ Export all claims (CSV)</a>
+{% endif %}
+{% endblock %}

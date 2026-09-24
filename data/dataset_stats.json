@@ -1,0 +1,61 @@
+{
+  "seed": 42,
+  "anchor_date": "2025-09-20",
+  "total_claims": 1500,
+  "per_class": {
+    "Invalid Claim": 500,
+    "Manual Review": 500,
+    "Valid Claim": 500
+  },
+  "splits": {
+    "train": {
+      "total": 1050,
+      "by_label": {
+        "Invalid Claim": 350,
+        "Manual Review": 350,
+        "Valid Claim": 350
+      }
+    },
+    "val": {
+      "total": 225,
+      "by_label": {
+        "Invalid Claim": 75,
+        "Manual Review": 75,
+        "Valid Claim": 75
+      }
+    },
+    "test": {
+      "total": 225,
+      "by_label": {
+        "Invalid Claim": 75,
+        "Manual Review": 75,
+        "Valid Claim": 75
+      }
+    }
+  },
+  "scenarios": {
+    "Valid Claim": {
+      "clean_active_warranty": 280,
+      "valid_with_prior_authorized_repair": 70,
+      "valid_extended_warranty": 60,
+      "boundary_fault_on_expiry_date": 45,
+      "boundary_reported_on_deadline": 45
+    },
+    "Invalid Claim": {
+      "expired_warranty_beyond_grace": 200,
+      "excluded_fault_or_damage": 140,
+      "unauthorized_repair": 60,
+      "reported_after_deadline": 80,
+      "product_already_replaced": 20
+    },
+    "Manual Review": {
+      "missing_mandatory_documents": 120,
+      "serial_number_mismatch": 80,
+      "duplicate_claim_indicators": 70,
+      "contradictory_dates": 70,
+      "fault_within_grace_period": 60,
+      "excessive_repair_history": 50,
+      "early_fault_doa_window": 50
+    }
+  }
+}

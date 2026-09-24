@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Dashboard — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("🏠", "Welcome back, " + first_name, role + " workspace · warranty alerts " + alert_days ~ " days before expiry") }}
+{{ ui.stat_row(stats) }}
+
+{% if expiring_list %}
+  {{ ui.alert("⏰ Warranty expiring soon:  " + expiring_list|join("  ·  "), "review") }}
+{% endif %}
+{% if expired %}
+  {{ ui.alert(expired ~ " product(s) have expired warranties — claims for them will likely be invalid.", "invalid") }}
+{% endif %}
+
+{% if notes %}
+{{ ui.section("🔔", "Notifications") }}
+<details class="ax-details" open>
+  <summary>Latest {{ notes|length }} notifications</summary>
+  <div class="ax-details-body">{{ ui.timeline(notes) }}</div>
+</details>
+{% endif %}
+
+{{ ui.section("📁", "Recent claims") }}
+{% if not claims %}
+  {{ ui.empty_state("🗂️", "No claims yet", "Submit your first claim from the New Claim page — both AI models will evaluate it in seconds.") }}
+{% else %}
+  {% for c in claims %}
+  <details class="ax-details">
+    <summary>
+      <b>{{ c.claim_id }}</b> · {{ c.brand }} {{ c.model }}
+      <span style="color:var(--text-low); font-weight:500;">· {{ c.fault_category.replace('_',' ') }}</span>
+      <span style="margin-left:auto;">{{ ui.status_badge(c.status) }} {{ ui.status_badge(c.final_decision) }}</span>
+    </summary>
+    <div class="ax-details-body">
+      <div style="font-size:.88rem; color:var(--text-mid);">{{ c.summary[:300] }}{% if c.summary|length > 300 %}…{% endif %}</div>
+    </div>
+  </details>
+  {% endfor %}
+{% endif %}
+{% endblock %}

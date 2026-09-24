@@ -1,0 +1,18 @@
+{
+  "category": "Home Appliances",
+  "standard_warranty_months": 12,
+  "extended_warranty_max_months": 24,
+  "covered_faults": ["manufacturing_defect", "motor_failure", "cooling_failure", "water_leakage", "drum_failure", "control_panel_fault"],
+  "excluded_faults": ["physical_damage", "liquid_damage", "improper_installation", "wear_and_tear", "commercial_use"],
+  "claim_reporting_period_days": 14,
+  "max_prior_repairs": 1,
+  "authorized_service_required": true,
+  "replacement_allowed": true,
+  "grace_period_days": 7,
+  "early_fault_review_days": 30,
+  "expensive_item_threshold": 800,
+  "mandatory_documents": ["receipt", "warranty_card", "product_image", "fault_evidence"],
+  "hard_fail_rules": ["warranty_expired", "excluded_fault", "unauthorized_repair", "late_reporting", "prior_replacement"],
+  "warning_rules": ["expensive_item", "warranty_nearing_expiry"],
+  "manual_review_rules": ["missing_documents", "serial_mismatch", "duplicate_claim", "contradictory_dates", "grace_period_claim", "excessive_repairs", "early_fault"]
+}

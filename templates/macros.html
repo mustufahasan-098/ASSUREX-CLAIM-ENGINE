@@ -1,0 +1,232 @@
+{# ------------------------------------------------------------------
+   ASSUREX UI KIT (Jinja macros)
+   Renders the design system defined in static/style.css.
+   Every page can import this file as:
+       {% import "macros.html" as ui %}
+   ------------------------------------------------------------------ #}
+
+
+{% macro hero(icon, title, subtitle='') %}
+<div class="ax-hero">
+  <div class="ax-hero-icon">{{ icon }}</div>
+  <h1>{{ title }}</h1>
+
+  {% if subtitle %}
+    <p>{{ subtitle }}</p>
+  {% endif %}
+</div>
+{% endmacro %}
+
+
+{% macro section(icon, title) %}
+<div class="ax-section">
+  <span class="ax-section-icon">{{ icon }}</span>
+  <h3>{{ title }}</h3>
+</div>
+{% endmacro %}
+
+
+{% macro stat_row(items) %}
+<div class="ax-stats">
+
+  {% for it in items %}
+  <div class="ax-stat">
+
+    <div class="ax-stat-icon ax-icon--{{ it.tone | default('neutral', true) }}">
+      {{ it.icon }}
+    </div>
+
+    <div>
+      <div class="ax-stat-value">{{ it.value }}</div>
+      <div class="ax-stat-label">{{ it.label }}</div>
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>
+{% endmacro %}
+
+
+{% macro badge(text, tone='neutral') %}
+<span class="ax-badge ax-badge--{{ tone }}">
+  {{ text }}
+</span>
+{% endmacro %}
+
+
+{% macro status_badge(status) %}
+
+{% set tone_map = {
+  'Approved': 'valid',
+  'Rejected': 'invalid',
+  'Manual Review': 'review',
+  'Additional Information Required': 'review',
+  'Draft': 'neutral',
+  'Submitted': 'info',
+  'Under Evaluation': 'info',
+  'Closed': 'neutral',
+  'Likely Valid': 'valid',
+  'Likely Invalid': 'invalid',
+  'Manual Review Required': 'review'
+} %}
+
+{% set emoji_map = {
+  'Approved': '✅',
+  'Rejected': '⛔',
+  'Manual Review': '👤',
+  'Additional Information Required': '📨',
+  'Draft': '📝',
+  'Submitted': '📤',
+  'Under Evaluation': '⏳',
+  'Closed': '🔒',
+  'Likely Valid': '✅',
+  'Likely Invalid': '⛔',
+  'Manual Review Required': '👤'
+} %}
+
+{% set tone = tone_map.get(status, 'neutral') %}
+{% set emoji = emoji_map.get(status, '•') %}
+
+<span class="ax-badge ax-badge--{{ tone }}">
+  {{ emoji }}&nbsp;{{ status }}
+</span>
+
+{% endmacro %}
+
+
+{% macro alert(message, tone='info') %}
+<div class="ax-alert ax-alert--{{ tone }}">
+  {{ message }}
+</div>
+{% endmacro %}
+
+
+{% macro kv_grid(pairs) %}
+<div class="ax-kv">
+
+  {% for pair in pairs %}
+  <div>
+    <div class="ax-kv-label">{{ pair[0] }}</div>
+    <div class="ax-kv-value">{{ pair[1] }}</div>
+  </div>
+  {% endfor %}
+
+</div>
+{% endmacro %}
+
+
+{% macro timeline(events) %}
+<ul class="ax-timeline">
+
+  {% for t in events %}
+  <li>
+    <div class="ax-tl-time">{{ t.ts }}</div>
+    <div class="ax-tl-event">{{ t.event }}</div>
+    <div class="ax-tl-actor">by {{ t.actor }}</div>
+  </li>
+  {% endfor %}
+
+</ul>
+{% endmacro %}
+
+
+{% macro empty_state(icon, title, hint='') %}
+<div class="ax-empty">
+
+  <div class="ax-empty-icon">{{ icon }}</div>
+  <div class="ax-empty-title">{{ title }}</div>
+
+  {% if hint %}
+    <div>{{ hint }}</div>
+  {% endif %}
+
+</div>
+{% endmacro %}
+
+
+{% macro decision_banner(final, subtitle='') %}
+
+{% set decision_tones = {
+  'Likely Valid': 'valid',
+  'Likely Invalid': 'invalid',
+  'Manual Review Required': 'review'
+} %}
+
+{% set decision_emojis = {
+  'Likely Valid': '✅',
+  'Likely Invalid': '⛔',
+  'Manual Review Required': '👤'
+} %}
+
+{% set tone = decision_tones.get(final, 'review') %}
+{% set emoji = decision_emojis.get(final, '👤') %}
+
+<div class="ax-decision ax-decision--{{ tone }}">
+
+  <div class="ax-decision-title">
+    {{ emoji }} {{ final }}
+  </div>
+
+  {% if subtitle %}
+    <div class="ax-decision-sub">
+      {{ subtitle }}
+    </div>
+  {% endif %}
+
+</div>
+
+{% endmacro %}
+
+
+{% macro prob_bars(probs, top='') %}
+
+{% set bar_tones = {
+  'Valid Claim': 'valid',
+  'Invalid Claim': 'invalid',
+  'Manual Review': 'review'
+} %}
+
+{# Find highest probability if top was not supplied #}
+{% if not top and probs %}
+  {% set top_class = namespace(name='') %}
+  {% set top_value = namespace(value=-1) %}
+
+  {% for cls, p in probs.items() %}
+    {% if p > top_value.value %}
+      {% set top_value.value = p %}
+      {% set top_class.name = cls %}
+    {% endif %}
+  {% endfor %}
+
+  {% set top = top_class.name %}
+{% endif %}
+
+
+{% for cls, p in probs.items() %}
+
+<div class="ax-bar-row">
+
+  <div class="ax-bar-label{% if cls == top %} ax-bar-top{% endif %}">
+    {{ cls }}
+    {% if cls == top %}
+      ⭐
+    {% endif %}
+  </div>
+
+  <div class="ax-bar-track">
+        <div
+  class="ax-bar-fill ax-bar-fill--{{ bar_tones.get(cls, 'neutral') }}"
+  style="width: {{ (p * 100) | round(1) }}%"
+></div>
+  </div>
+
+  <div class="ax-bar-pct">
+    {{ (p * 100) | round(1) }}%
+  </div>
+
+</div>
+
+{% endfor %}
+
+{% endmacro %}

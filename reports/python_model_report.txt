@@ -1,0 +1,55 @@
+ASSUREX - PYTHON CLASSIFICATION MODEL REPORT
+Generated: 2026-09-23T22:43:28.818361+00:00
+Model version: PY-1.0  |  Selected: RandomForest
+sklearn 1.9.1  |  xgboost 3.2.0
+
+--- ALGORITHM COMPARISON (CV on train, selection on val) ---
+Algorithm            CV mean    CV std   Val acc    Val F1
+LogisticRegression    0.8095    0.0329    0.7556    0.7553
+RandomForest          0.9714    0.0104    0.9600    0.9601
+XGBoost               0.9733    0.0098    0.9556    0.9558
+
+--- FINAL TEST SET EVALUATION (never used for training/selection) ---
+Accuracy: 0.9511   F1 (macro): 0.9514
+SRS requirement: >= 0.85 -> PASS
+
+Class-wise report:
+               precision    recall  f1-score   support
+
+Invalid Claim     1.0000    0.9733    0.9865        75
+Manual Review     1.0000    0.8800    0.9362        75
+  Valid Claim     0.8721    1.0000    0.9317        75
+
+     accuracy                         0.9511       225
+    macro avg     0.9574    0.9511    0.9514       225
+ weighted avg     0.9574    0.9511    0.9514       225
+
+Confusion matrix (rows = actual, cols = predicted):
+                 Invalid Claim  Manual Review    Valid Claim
+  Invalid Claim             73              0              2
+  Manual Review              0             66              9
+    Valid Claim              0              0             75
+
+Top 15 feature importances:
+  num__warranty_days_remaining             0.2104
+  num__product_age_days                    0.1112
+  num__days_to_report                      0.0909
+  num__missing_docs_count                  0.0620
+  bool__serial_match                       0.0598
+  bool__fault_covered                      0.0581
+  bool__fault_excluded                     0.0565
+  bool__authorized_repair                  0.0542
+  num__prior_claim_count                   0.0519
+  num__repair_count                        0.0353
+  num__purchase_price                      0.0241
+  bool__replaced_before                    0.0209
+  bool__has_receipt                        0.0165
+  bool__has_repair_report                  0.0109
+  cat__warranty_type_standard              0.0109
+
+Sample test predictions (first 5):
+  CLM-001363  actual=Invalid Claim  pred=Invalid Claim  [Invalid Claim=0.772, Manual Review=0.073, Valid Claim=0.155]
+  CLM-001304  actual=Manual Review  pred=Manual Review  [Invalid Claim=0.007, Manual Review=0.868, Valid Claim=0.125]
+  CLM-001404  actual=Valid Claim  pred=Valid Claim  [Invalid Claim=0.090, Manual Review=0.244, Valid Claim=0.667]
+  CLM-001492  actual=Valid Claim  pred=Valid Claim  [Invalid Claim=0.075, Manual Review=0.158, Valid Claim=0.767]
+  CLM-001341  actual=Valid Claim  pred=Valid Claim  [Invalid Claim=0.023, Manual Review=0.089, Valid Claim=0.888]

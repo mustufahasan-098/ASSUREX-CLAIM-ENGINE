@@ -1,0 +1,18 @@
+{
+  "category": "Electronics",
+  "standard_warranty_months": 24,
+  "extended_warranty_max_months": 36,
+  "covered_faults": ["manufacturing_defect", "power_failure", "software_malfunction", "screen_defect", "battery_failure", "audio_fault", "overheating"],
+  "excluded_faults": ["liquid_damage", "physical_damage", "unauthorized_modification", "wear_and_tear", "commercial_use"],
+  "claim_reporting_period_days": 30,
+  "max_prior_repairs": 2,
+  "authorized_service_required": true,
+  "replacement_allowed": true,
+  "grace_period_days": 15,
+  "early_fault_review_days": 30,
+  "expensive_item_threshold": 1500,
+  "mandatory_documents": ["receipt", "warranty_card", "fault_evidence"],
+  "hard_fail_rules": ["warranty_expired", "excluded_fault", "unauthorized_repair", "late_reporting", "prior_replacement"],
+  "warning_rules": ["expensive_item", "warranty_nearing_expiry"],
+  "manual_review_rules": ["missing_documents", "serial_mismatch", "duplicate_claim", "contradictory_dates", "grace_period_claim", "excessive_repairs", "early_fault"]
+}

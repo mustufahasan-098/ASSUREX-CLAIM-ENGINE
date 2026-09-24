@@ -1,0 +1,18 @@
+{
+  "category": "Power Tools",
+  "standard_warranty_months": 18,
+  "extended_warranty_max_months": 36,
+  "covered_faults": ["manufacturing_defect", "motor_failure", "chuck_defect", "battery_failure", "switch_fault"],
+  "excluded_faults": ["physical_damage", "wear_and_tear", "unauthorized_modification", "improper_use"],
+  "claim_reporting_period_days": 21,
+  "max_prior_repairs": 2,
+  "authorized_service_required": true,
+  "replacement_allowed": false,
+  "grace_period_days": 0,
+  "early_fault_review_days": 30,
+  "expensive_item_threshold": 400,
+  "mandatory_documents": ["receipt", "serial_evidence", "fault_evidence"],
+  "hard_fail_rules": ["warranty_expired", "excluded_fault", "unauthorized_repair", "late_reporting", "prior_replacement"],
+  "warning_rules": ["expensive_item", "warranty_nearing_expiry"],
+  "manual_review_rules": ["missing_documents", "serial_mismatch", "duplicate_claim", "contradictory_dates", "excessive_repairs", "early_fault"]
+}

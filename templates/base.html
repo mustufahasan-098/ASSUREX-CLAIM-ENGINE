@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AssureX Claim Engine{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='assurex.css') }}">
+</head>
+<body>
+  {% if current_user %}
+  <div class="ax-shell">
+    <aside class="ax-sidenav">
+      <div class="ax-brand"><span>ASSUREX</span><b>Claim Engine</b></div>
+      <nav class="ax-nav">
+        {% for endpoint, label, icon in nav_items %}
+        <a class="ax-navlink {{ 'active' if request.endpoint == endpoint else '' }}"
+           href="{{ url_for(endpoint) }}"><span>{{ icon }}</span><span>{{ label }}</span></a>
+        {% endfor %}
+      </nav>
+      <div class="ax-user">
+        <div><b>{{ current_user.name }}</b></div>
+        <div class="role">{{ current_user.role.replace('_', ' ')|title }}</div>
+        <form method="post" action="{{ url_for('logout') }}">
+          <button class="ax-btn ax-btn--block" style="margin-top:10px;">Log out</button>
+        </form>
+      </div>
+    </aside>
+    <main class="ax-main">
+      <div class="ax-flash-stack">
+        {% with msgs = get_flashed_messages(with_categories=true) %}
+          {% for cat, msg in msgs %}
+          <div class="ax-alert ax-alert--{{ {'error':'invalid','success':'valid','warning':'review'}.get(cat, 'info') }}">{{ msg }}</div>
+          {% endfor %}
+        {% endwith %}
+      </div>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% else %}
+    <div class="ax-flash-stack">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in msgs %}
+        <div class="ax-alert ax-alert--{{ {'error':'invalid','success':'valid','warning':'review'}.get(cat, 'info') }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+    </div>
+    {% block auth %}{% endblock %}
+  {% endif %}
+</body>
+</html>

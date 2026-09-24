@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Claims — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("📁", "My Claims" if g.user.role in ("customer", "service_center") else "All Claims", "Search, filter, and track every claim through its lifecycle") }}
+
+<details class="ax-details" open>
+  <summary>🔎 Filters</summary>
+  <div class="ax-details-body">
+    <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="ax-field" style="flex:1; min-width:150px; margin:0;"><label>Status</label>
+        <select class="ax-input" name="status">{% for s in statuses %}<option {% if s == status_f %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+      <div class="ax-field" style="flex:1; min-width:170px; margin:0;"><label>AI decision</label>
+        <select class="ax-input" name="decision">{% for d in decisions %}<option {% if d == decision_f %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div>
+      <div class="ax-field" style="flex:1; min-width:150px; margin:0;"><label>Category</label>
+        <select class="ax-input" name="category"><option {% if cat_f == "All" %}selected{% endif %}>All</option>{% for c in categories %}<option {% if c == cat_f %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+      <div class="ax-field" style="flex:2; min-width:180px; margin:0;"><label>Search</label>
+        <input class="ax-input" name="q" value="{{ q }}" placeholder="Claim ID / serial / invoice"></div>
+      <button class="ax-btn ax-btn--primary" type="submit">Filter</button>
+    </form>
+  </div>
+</details>
+<p style="font-size:.82rem; color:var(--t-low); margin:10px 0;">Showing {{ claims|length }} of {{ total }} claims</p>
+
+{% if not claims %}
+  {{ ui.empty_state("🗂️", "No claims found", "Adjust the filters, or submit a claim from the New Claim page.") }}
+{% endif %}
+{% for c in claims %}
+<details class="ax-details">
+  <summary>
+    <b>{{ c.claim_id }}</b> · {{ c.brand }} {{ c.model }}
+    <span style="color:var(--t-low); font-weight:500;">· {{ c.fault_category.replace('_',' ') }}</span>
+    <span style="margin-left:auto;">{{ ui.status_badge(c.status) }} {{ ui.status_badge(c.final_decision) }}</span>
+  </summary>
+  <div class="ax-details-body">
+    <div class="ax-grid-2">
+      <div>
+        <p style="font-size:.88rem;">{{ c.summary }}</p>
+        {{ ui.kv_grid([
+          ("Python model", c.python_pred ~ " (" ~ "%.0f"|format(c.py_top_conf|float*100) ~ "%)"),
+          ("Teachable Machine", c.tm_pred ~ " (" ~ "%.0f"|format(c.tm_top_conf|float*100) ~ "%)"),
+          ("Consistency", c.consistency),
+          ("Owner", c.owner_email)
+        ]) }}
+        {% if c.reviewer %}
+          {{ ui.alert("🧑‍⚖️ " ~ c.reviewer ~ ": “" ~ (c.reviewer_comment or "") ~ "”" ~ (" ⚠️ overrode the AI recommendation" if c.override else ""), "review" if c.override else "info") }}
+        {% endif %}
+        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+          <a class="ax-btn ax-btn--sm ax-btn--primary" href="{{ url_for('claim_detail', cid=c.claim_id) }}">🔍 Full detail</a>
+          <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Report</a>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <img src="{{ url_for('claim_card', cid=c.claim_id) }}" alt="card"
+             style="width:100%; max-width:280px; border-radius:12px; border:1px solid var(--stroke);">
+      </div>
+    </div>
+  </div>
+</details>
+{% endfor %}
+{% endblock %}

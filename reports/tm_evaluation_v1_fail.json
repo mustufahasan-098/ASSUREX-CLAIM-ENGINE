@@ -1,0 +1,44 @@
+{
+  "calibration_mode": "mobilenet",
+  "calibration_accuracy": 0.75,
+  "val": {
+    "accuracy": 0.7155555555555555,
+    "confusion_matrix": {
+      "Valid Claim": {
+        "Valid Claim": 14,
+        "Invalid Claim": 8,
+        "Manual Review": 53
+      },
+      "Invalid Claim": {
+        "Valid Claim": 0,
+        "Invalid Claim": 74,
+        "Manual Review": 1
+      },
+      "Manual Review": {
+        "Valid Claim": 0,
+        "Invalid Claim": 2,
+        "Manual Review": 73
+      }
+    }
+  },
+  "test": {
+    "accuracy": 0.6844444444444444,
+    "confusion_matrix": {
+      "Valid Claim": {
+        "Valid Claim": 8,
+        "Invalid Claim": 6,
+        "Manual Review": 61
+      },
+      "Invalid Claim": {
+        "Valid Claim": 0,
+        "Invalid Claim": 71,
+        "Manual Review": 4
+      },
+      "Manual Review": {
+        "Valid Claim": 0,
+        "Invalid Claim": 0,
+        "Manual Review": 75
+      }
+    }
+  }
+}

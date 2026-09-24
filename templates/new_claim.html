@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}New Claim — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("📝", "New Warranty Claim", "Upload evidence → describe the fault → both AI models evaluate your claim in seconds") }}
+
+{% if step == "no_products" %}
+  {{ ui.empty_state("📦", "No products registered", "Register a product first — claims are always linked to a registered product.") }}
+  <div style="text-align:center; margin-top:14px;">
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('products') }}">📦 Go to My Products</a>
+  </div>
+
+{% elif step == "select" %}
+  {{ ui.section("📦", "Select a product") }}
+  <form method="post" action="{{ url_for('new_claim') }}">
+    <div class="ax-pick-grid">
+      {% for pick in picks %}
+      <label class="ax-pick">
+        <input type="radio" name="product_id" value="{{ pick.p.product_id }}" {% if loop.first %}checked{% endif %}>
+        <div class="ax-pick-inner">
+          <div class="ax-pick-title">{{ pick.p.name }}</div>
+          <div class="ax-pick-sub">{{ pick.p.brand }} {{ pick.p.model }} · {{ pick.p.product_category }}</div>
+          <div>{% if pick.expired %}{{ ui.badge("⛔ Warranty expired", "invalid") }}{% elif pick.expiring %}{{ ui.badge("⏰ Expiring in " ~ pick.left ~ " days", "review") }}{% else %}{{ ui.badge("✅ " ~ pick.left ~ " days left", "valid") }}{% endif %}</div>
+        </div>
+      </label>
+      {% endfor %}
+    </div>
+    <div style="margin-top:16px;">
+      <button class="ax-btn ax-btn--primary" type="submit">Continue →</button>
+    </div>
+  </form>
+
+{% else %}
+  {{ ui.alert("Selected: " ~ P.name ~ " — " ~ P.brand ~ " " ~ P.model ~ " · warranty " ~ ("EXPIRED" if left < 0 else left ~ " days left, ends " ~ expiry), "invalid" if left < 0 else "info") }}
+  <a class="ax-btn ax-btn--sm" href="{{ url_for('new_claim') }}">← change product</a>
+
+  {{ ui.section("📎", "1 · Supporting documents") }}
+  <div class="ax-card">
+    <h4>Upload documents — SHA-256 hashed for duplicate detection</h4>
+    <form method="post" action="{{ url_for('new_claim_stage') }}" enctype="multipart/form-data" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <input type="hidden" name="product_id" value="{{ P.product_id }}">
+      <div class="ax-field" style="flex:2; min-width:220px; margin:0;">
+        <label>File (PDF / JPG / PNG)</label>
+        <input class="ax-input" type="file" name="doc" accept=".pdf,.jpg,.jpeg,.png" required>
+      </div>
+      <div class="ax-field" style="flex:1; min-width:160px; margin:0;">
+        <label>Document type</label>
+        <select class="ax-input" name="dtype">{% for t in doc_types %}<option value="{{ t }}">{{ t.replace('_',' ')|title }}</option>{% endfor %}</select>
+      </div>
+      <button class="ax-btn ax-btn--primary" type="submit">➕ Upload & scan</button>
+    </form>
+  </div>
+
+  {% if staged %}
+    {% for s in staged %}
+    <div class="ax-doc-item">
+      <span>📎 <b>{{ s.type.replace('_',' ')|title }}</b> — {{ s.name }} · <code>{{ s.sha256[:14] }}…</code> · {{ "%.0f"|format(s.size / 1024) }} KB</span>
+      <form method="post" action="{{ url_for('new_claim_unstage') }}">
+        <input type="hidden" name="product_id" value="{{ P.product_id }}">
+        <input type="hidden" name="index" value="{{ loop.index0 }}">
+        <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit">✕ Remove</button>
+      </form>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if ocr and ocr.available %}
+    {{ ui.alert("🔍 OCR extraction — dates: " ~ (ocr.dates|join(", ") or "none") ~ " · invoices: " ~ (ocr.invoice_numbers|join(", ") or "none") ~ " · serials: " ~ (ocr.serial_numbers|join(", ") or "none") ~ " · amounts: " ~ (ocr.amounts|join(", ") or "none") ~ ". VERIFY these against the form below before submitting (req vii).", "info") }}
+  {% elif ocr and not ocr.available %}
+    {{ ui.alert(ocr.note, "review") }}
+  {% endif %}
+    {% if ocr_verify and ocr_verify.verdict == 'verified' %}
+    {{ ui.alert("✅ Receipt VERIFIED against registered product — " ~ ocr_verify.summary, "valid") }}
+  {% elif ocr_verify and ocr_verify.verdict == 'mismatch' %}
+    {{ ui.alert("⛔ Receipt does NOT match the registered product — " ~ ocr_verify.summary ~ " — the claim will be routed to manual review.", "invalid") }}
+  {% elif ocr_verify and ocr_verify.verdict == 'inconclusive' %}
+    {{ ui.alert("ℹ️ Receipt could not be fully verified — " ~ ocr_verify.summary, "review") }}
+  {% endif %}
+
+  {% if missing %}
+    {{ ui.alert("Missing mandatory documents: " ~ missing|join(", ") ~ " — the claim will be routed to manual review without them.", "review") }}
+  {% else %}
+    {{ ui.alert("All mandatory documents attached ✅", "valid") }}
+  {% endif %}
+
+  {{ ui.section("✍️", "2 · Claim details") }}
+  <div class="ax-form-card">
+    <form method="post" action="{{ url_for('new_claim_submit') }}">
+      <input type="hidden" name="product_id" value="{{ P.product_id }}">
+      <div class="ax-grid-2">
+        <div class="ax-field">
+          <label>Fault type</label>
+          <select class="ax-input" name="fault_category" required>
+            <optgroup label="✅ Covered faults">
+              {% for f in policy.covered_faults %}<option value="{{ f }}">{{ f.replace('_',' ') }}</option>{% endfor %}
+            </optgroup>
+            <optgroup label="⛔ Excluded (claim will be invalid)">
+              {% for f in policy.excluded_faults %}<option value="{{ f }}">{{ f.replace('_',' ') }}</option>{% endfor %}
+            </optgroup>
+          </select>
+        </div>
+        <div class="ax-field"><label>Fault date *</label>
+          <input class="ax-input" type="date" name="fault_date" value="{{ today }}" required></div>
+        <div class="ax-field"><label>Claim date *</label>
+          <input class="ax-input" type="date" name="claim_date" value="{{ today }}" required></div>
+        <div class="ax-field"><label>Serial number on product *</label>
+          <input class="ax-input" name="serial" value="{{ P.serial_number }}" required>
+        </div>
+        <div class="ax-field"><label>Invoice number *</label>
+          <input class="ax-input" name="invoice" value="{{ default_invoice }}" required></div>
+        <div class="ax-field"><label>Previous repairs</label>
+          <input class="ax-input" type="number" name="repair_count" min="0" max="10" value="0"></div>
+        <div class="ax-field"><label>Last repair date</label>
+          <input class="ax-input" type="date" name="repair_date"></div>
+      </div>
+      <div class="ax-field">
+        <label class="ax-checkline"><input type="checkbox" name="authorized" checked> Repairs were done at an authorized service center</label>
+      </div>
+      <div class="ax-field">
+        <label>Fault description</label>
+        <textarea class="ax-input" name="description" placeholder="Describe what happened…"></textarea>
+      </div>
+      {{ ui.alert("💡 Live checks: date contradictions (claim before purchase, fault after claim, repair before purchase) and serial mismatches are detected automatically.", "info") }}
+      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit">🚀 Evaluate & Submit Claim</button>
+    </form>
+  </div>
+{% endif %}
+{% endblock %}

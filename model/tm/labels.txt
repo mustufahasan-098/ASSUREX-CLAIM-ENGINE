@@ -1,0 +1,3 @@
+0 Invalid Claim
+1 Manual Review
+2 Valid Claim

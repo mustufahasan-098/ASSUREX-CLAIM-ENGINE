@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Login — AssureX Claim Engine{% endblock %}
+{% block auth %}
+<div class="ax-auth-wrap">
+  <div>
+    <div class="ax-hero" style="padding:32px 34px;">
+      <div class="ax-hero-icon">🛡️</div>
+      <h1>AssureX Claim Engine</h1>
+      <p>AI-powered warranty claim validation · NextWave AI &amp; ML</p>
+    </div>
+    <div class="ax-card">
+      <h4>⚡ How a claim is evaluated</h4>
+      <div class="ax-kv">
+        <div><div class="ax-kv-label">Step 1</div><div class="ax-kv-value">📄 Documents &amp; details collected</div></div>
+        <div><div class="ax-kv-label">Step 2</div><div class="ax-kv-value">⚖️ Warranty rule engine validates policy rules</div></div>
+        <div><div class="ax-kv-label">Step 3</div><div class="ax-kv-value">🐍 Python ML model scores the claim</div></div>
+        <div><div class="ax-kv-label">Step 4</div><div class="ax-kv-value">🪪 Claim Summary Card → Teachable Machine model</div></div>
+        <div><div class="ax-kv-label">Step 5</div><div class="ax-kv-value">🔀 Fusion engine combines everything → decision</div></div>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <span class="ax-badge ax-badge--valid">Dual AI models</span>
+      <span class="ax-badge ax-badge--info">Configurable rules</span>
+      <span class="ax-badge ax-badge--neutral">Full audit trail</span>
+      <span class="ax-badge ax-badge--review">Human review queue</span>
+    </div>
+  </div>
+  <div class="ax-form-card">
+    <h4 style="margin-bottom:16px;">🔑 Log in</h4>
+    <form method="post">
+      <div class="ax-field">
+        <label>Email</label>
+        <input class="ax-input" type="email" name="email" required autofocus>
+      </div>
+      <div class="ax-field">
+        <label>Password</label>
+        <input class="ax-input" type="password" name="password" required>
+      </div>
+      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit">Log in</button>
+    </form>
+    <p style="margin-top:16px; font-size:.9rem;">No account?
+      <a href="{{ url_for('register') }}">Register here</a></p>
+    <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--stroke-soft);">
+      <div class="ax-kv-label" style="margin-bottom:8px;">Demo accounts</div>
+      <div style="font-size:.82rem; color:var(--text-mid); line-height:1.8;">
+        admin@assurex.com / Admin@123<br>
+        reviewer@assurex.com / Reviewer@123<br>
+        demo@assurex.com / Demo@123
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{
+  "model_version": "PY-1.0",
+  "algorithm": "RandomForest",
+  "trained_at": "2026-09-23T22:43:29.119251+00:00",
+  "class_order": [
+    "Invalid Claim",
+    "Manual Review",
+    "Valid Claim"
+  ],
+  "training_rows": 1050,
+  "validation_rows": 225,
+  "test_rows": 225,
+  "cv_results": [
+    {
+      "algorithm": "LogisticRegression",
+      "cv_accuracy_mean": 0.8095,
+      "cv_accuracy_std": 0.0329,
+      "val_accuracy": 0.7556,
+      "val_f1_macro": 0.7553
+    },
+    {
+      "algorithm": "RandomForest",
+      "cv_accuracy_mean": 0.9714,
+      "cv_accuracy_std": 0.0104,
+      "val_accuracy": 0.96,
+      "val_f1_macro": 0.9601
+    },
+    {
+      "algorithm": "XGBoost",
+      "cv_accuracy_mean": 0.9733,
+      "cv_accuracy_std": 0.0098,
+      "val_accuracy": 0.9556,
+      "val_f1_macro": 0.9558
+    }
+  ],
+  "test_accuracy": 0.9511,
+  "test_f1_macro": 0.9514,
+  "numeric_features": [
+    "product_age_days",
+    "warranty_days_remaining",
+    "days_to_report",
+    "missing_docs_count",
+    "warranty_months",
+    "extended_months",
+    "purchase_price",
+    "repair_count",
+    "prior_claim_count"
+  ],
+  "boolean_features": [
+    "authorized_repair",
+    "serial_match",
+    "duplicate_invoice",
+    "replaced_before",
+    "fault_covered",
+    "fault_excluded",
+    "has_receipt",
+    "has_warranty_card",
+    "has_product_image",
+    "has_serial_evidence",
+    "has_fault_evidence",
+    "has_repair_report"
+  ],
+  "categorical_features": [
+    "product_category",
+    "brand",
+    "fault_category",
+    "warranty_type"
+  ],
+  "excluded_columns": [
+    "claim_id",
+    "user_id",
+    "serial_number",
+    "invoice_number",
+    "raw dates (replaced by derived features)"
+  ]
+}

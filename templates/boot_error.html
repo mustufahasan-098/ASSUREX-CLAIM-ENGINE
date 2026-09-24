@@ -1,0 +1,13 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>AssureX — startup error</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body style="display:flex; align-items:center; justify-content:center; min-height:100vh;">
+<div class="ax-form-card" style="max-width:560px;">
+  <h4>⚠️ AssureX could not start</h4>
+  {% if not boot.models_ok %}<p><b>AI models:</b> {{ boot.models_err }}</p>{% endif %}
+  {% if not boot.fb_ok %}<p><b>Firebase:</b> {{ boot.fb_err }}</p>{% endif %}
+  <p style="font-size:.85rem; color:var(--text-mid);">Check that model/python/ and
+  model/tm/ contain the trained models and firebase_service_account.json is in the
+  project root, then restart.</p>
+</div>
+</body></html>

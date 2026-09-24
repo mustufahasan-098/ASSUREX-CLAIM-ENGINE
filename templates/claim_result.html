@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}{{ c.claim_id }} — AssureX{% endblock %}
+{% block content %}
+{{ ui.decision_banner(c.final_decision, "Claim " ~ c.claim_id ~ " · status " ~ c.status ~ " · " ~ c.consistency ~ " · confidence difference " ~ "%.3f"|format(c.conf_diff|float)) }}
+
+{{ ui.stat_row([
+  {"label": "Python model", "value": py_short, "icon": "🐍", "tone": py_tone},
+  {"label": "Teachable Machine", "value": tm_short, "icon": "🖼️", "tone": tm_tone},
+  {"label": "Models match", "value": "Yes" if c.python_pred == c.tm_pred else "No", "icon": "🤝", "tone": "valid" if c.python_pred == c.tm_pred else "invalid"},
+  {"label": "Fraud risk", "value": risk_score ~ "/100", "icon": "🕵️", "tone": risk_tone}
+]) }}
+
+<div class="ax-grid-2">
+  <div class="ax-card"><h4>🐍 Python classification model</h4>
+    {{ ui.prob_bars(c.python_probs) }}</div>
+  <div class="ax-card"><h4>🖼️ Teachable Machine model</h4>
+    {{ ui.prob_bars(c.tm_probs) }}</div>
+</div>
+
+{{ ui.section("🧠", "Decision explanation") }}
+<div class="ax-grid-2">
+  <div class="ax-card"><h4>✅ Factors supporting</h4>
+    <ul style="padding-left:18px; color:var(--t-mid); font-size:.9rem;">
+      {% for f in c.explanation.support %}<li>{{ f }}</li>{% endfor %}
+      {% for w in c.explanation.warnings %}<li>ℹ️ {{ w }}</li>{% endfor %}
+      {% if not c.explanation.support and not c.explanation.warnings %}<li>None</li>{% endif %}
+    </ul></div>
+  <div class="ax-card"><h4>⚠️ Factors against / attention</h4>
+    <ul style="padding-left:18px; color:var(--t-mid); font-size:.9rem;">
+      {% for f in c.explanation.oppose %}<li>{{ f }}</li>{% endfor %}
+      {% if not c.explanation.oppose %}<li>None</li>{% endif %}
+    </ul></div>
+</div>
+
+{% if risk_reasons %}
+  {{ ui.alert("🕵️ Fraud risk " ~ risk_score ~ "/100 — " ~ risk_reasons|join(" · "), risk_tone) }}
+{% endif %}
+
+{{ ui.section("⚖️", "Rules, documents & comparison") }}
+{% set r = c.rules_outcome %}
+{% if r.contradictions %}{{ ui.alert("Contradictions: " ~ r.contradictions|join(" · "), "invalid") }}{% endif %}
+{% if r.hard_fails %}{{ ui.alert("Hard-fail rules: " ~ r.hard_fails|join(" · "), "invalid") }}{% endif %}
+{% if r.review_flags %}{{ ui.alert("Review flags: " ~ r.review_flags|join(" · "), "review") }}{% endif %}
+{% if r.warnings %}{{ ui.alert("Warnings: " ~ r.warnings|join(" · "), "info") }}{% endif %}
+{% if not r.contradictions and not r.hard_fails and not r.review_flags %}{{ ui.alert("All warranty rules passed.", "valid") }}{% endif %}
+
+{{ ui.kv_grid([
+  ("Rule-engine label", r.label),
+  ("Confidence difference", "%.3f"|format(c.conf_diff|float)),
+  ("Consistency", c.consistency),
+  ("Model versions", c.model_versions.python ~ " · " ~ c.model_versions.tm),
+  ("Documents", c.documents|map(attribute='type')|join(", ") if c.documents else "none"),
+  ("Duplicate indicators", c.duplicates.prior_claims ~ " prior · invoice reused: " ~ ("yes" if c.duplicates.invoice_reused else "no") ~ " · doc reuse: " ~ ("yes" if c.duplicates.doc_hash_reuse else "no"))
+]) }}
+
+{{ ui.section("🪪", "Claim Summary Card") }}
+<div class="ax-grid-2">
+  <div><img src="{{ url_for('claim_card', cid=c.claim_id) }}" alt="Claim Summary Card"
+       style="width:100%; max-width:430px; border-radius:14px; border:1px solid var(--stroke); box-shadow:var(--sh-2);"></div>
+  <div class="ax-card" style="align-self:start;">
+    <h4>🪪 About this card</h4>
+    <p style="font-size:.88rem;">Generated automatically from the submitted claim data (SRS Step 7). Contains factual claim information only — <b>no predictions or confidence scores</b> (SRS req xx), so both models evaluate independently. This exact image was classified by the Teachable Machine model.</p>
+  </div>
+</div>
+
+{{ ui.section("📋", "AI-generated summary") }}
+<div class="ax-card"><p style="font-size:.93rem;">{{ c.summary }}</p></div>
+
+{{ ui.section("🕓", "Timeline") }}
+<div class="ax-card">{{ ui.timeline(c.timeline) }}</div>
+
+<div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+  <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Download full report</a>
+  <a class="ax-btn" href="{{ url_for('new_claim') }}">➕ New claim</a>
+  {% if g.user.role in ('customer','service_center') %}
+  <a class="ax-btn" href="{{ url_for('claims') }}">📁 My claims</a>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Review Queue — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("⚖️", "Manual Review Queue", "Claims the AI could not confidently auto-decide — your judgment completes the system") }}
+
+{{ ui.stat_row(stats) }}
+
+{% if not items %}
+  {{ ui.empty_state("🎉", "Queue is empty", "Every claim has been auto-decided or reviewed — the system is fully caught up.") }}
+{% endif %}
+
+{% for item in items %}
+{% set c = item.c %}
+{% set r = c.rules_outcome %}
+<details class="ax-details">
+  <summary>
+    <b>{{ c.claim_id }}</b> · {{ c.brand }} {{ c.model }}
+    <span style="margin-left:auto;">{{ ui.status_badge(c.status) }} {{ ui.badge("Risk " ~ item.risk ~ "/100", item.tone) }}</span>
+  </summary>
+  <div class="ax-details-body">
+    <div class="ax-grid-2">
+      <div>
+        {% if r.contradictions %}{{ ui.alert("Contradictions: " ~ r.contradictions|join(" · "), "invalid") }}{% endif %}
+        {% if r.hard_fails %}{{ ui.alert("Hard fails: " ~ r.hard_fails|join(" · "), "invalid") }}{% endif %}
+        {% if r.review_flags %}{{ ui.alert("Flags: " ~ r.review_flags|join(" · "), "review") }}{% endif %}
+        {{ ui.kv_grid([
+          ("Python model", c.python_pred ~ " (" ~ "%.0f"|format(c.py_top_conf|float*100) ~ "%)"),
+          ("Teachable Machine", c.tm_pred ~ " (" ~ "%.0f"|format(c.tm_top_conf|float*100) ~ "%)"),
+          ("Consistency", c.consistency),
+          ("Documents", c.documents|map(attribute='type')|join(", ") if c.documents else "none"),
+          ("Owner", c.owner_email)
+        ]) }}
+        <p style="font-size:.87rem;">{{ c.summary[:400] }}{% if c.summary|length > 400 %}…{% endif %}</p>
+      </div>
+      <div style="text-align:center;">
+        <img src="{{ url_for('claim_card', cid=c.claim_id) }}" alt="card"
+             style="width:100%; max-width:270px; border-radius:12px; border:1px solid var(--stroke);">
+        <div style="margin-top:10px;"><a class="ax-btn ax-btn--sm" href="{{ url_for('claim_detail', cid=c.claim_id) }}">🔍 Full detail</a></div>
+      </div>
+    </div>
+    <form method="post" action="{{ url_for('review_action', cid=c.claim_id) }}" style="margin-top:14px;">
+      <div class="ax-field"><label>Reviewer comment</label>
+        <textarea class="ax-input" name="comment" placeholder="Reasoning for the decision (recorded in the audit trail)…"></textarea></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="ax-btn ax-btn--primary" name="action" value="approve" type="submit">✅ Approve</button>
+        <button class="ax-btn ax-btn--danger" name="action" value="reject" type="submit">⛔ Reject</button>
+        <button class="ax-btn" name="action" value="request" type="submit">📨 Request more info</button>
+      </div>
+    </form>
+  </div>
+</details>
+{% endfor %}
+{% endblock %}

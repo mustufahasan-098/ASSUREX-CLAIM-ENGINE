@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}My Products — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("📦", "My Products & Warranties", "Register products, track coverage, and see the exact policy rules that will evaluate your claims") }}
+
+{{ ui.stat_row([
+  {"label": "Products", "value": counts.total, "icon": "📦", "tone": "neutral"},
+  {"label": "Active", "value": counts.active, "icon": "✅", "tone": "valid"},
+  {"label": "Expiring soon", "value": counts.expiring, "icon": "⏰", "tone": "review"},
+  {"label": "Expired", "value": counts.expired, "icon": "⛔", "tone": "invalid"}
+]) }}
+
+<details class="ax-details" {% if not items %}open{% endif %}>
+  <summary>➕ Register a new product</summary>
+  <div class="ax-details-body">
+    <form method="post" style="max-width:640px;">
+      <div class="ax-grid-2">
+        <div class="ax-field"><label>Product name *</label>
+          <input class="ax-input" name="name" required placeholder="e.g. Smartphone"></div>
+        <div class="ax-field"><label>Category *</label>
+          <select class="ax-input" name="category">{% for c in categories %}<option>{{ c }}</option>{% endfor %}</select></div>
+        <div class="ax-field"><label>Brand *</label>
+          <input class="ax-input" name="brand" required placeholder="e.g. Samsung"></div>
+        <div class="ax-field"><label>Model *</label>
+          <input class="ax-input" name="model" required placeholder="e.g. Galaxy S22"></div>
+        <div class="ax-field"><label>Serial number *</label>
+          <input class="ax-input" name="serial" required placeholder="e.g. SN12345678"></div>
+        <div class="ax-field"><label>Purchase date *</label>
+          <input class="ax-input" type="date" name="purchase_date" required></div>
+        <div class="ax-field"><label>Purchase price</label>
+          <input class="ax-input" type="number" step="50" min="0" name="price" value="500"></div>
+        <div class="ax-field"><label>Retailer</label>
+          <input class="ax-input" name="retailer" placeholder="e.g. Demo Electronics"></div>
+        <div class="ax-field"><label>Extended warranty (months)</label>
+          <select class="ax-input" name="extended">
+            <option value="0">Standard warranty only</option>
+            <option value="12">+12 months</option>
+            <option value="24">+24 months</option>
+          </select></div>
+      </div>
+      <button class="ax-btn ax-btn--primary" type="submit">Register product</button>
+      <span style="font-size:.78rem; color:var(--t-low); margin-left:10px;">extended months are clamped to the policy maximum</span>
+    </form>
+  </div>
+</details>
+
+{{ ui.section("📋", "Registered products") }}
+{% if not items %}
+  {{ ui.empty_state("📦", "No products registered yet", "Register a product above to start tracking its warranty and submitting claims.") }}
+{% endif %}
+{% for item in items %}
+<details class="ax-details">
+  <summary>
+    <b>{{ item.p.name }}</b> — {{ item.p.brand }} {{ item.p.model }}
+    <span style="color:var(--t-low); font-weight:500;">({{ item.p.product_id }})</span>
+    <span style="margin-left:auto;">{{ ui.badge("Warranty " ~ item.state ~ " · " ~ item.left ~ " days",
+        "invalid" if item.state == "Expired" else ("review" if item.state == "Expiring soon" else "valid")) }}</span>
+  </summary>
+  <div class="ax-details-body">
+    {{ ui.kv_grid([
+      ("Category", item.p.product_category),
+      ("Serial number", item.p.serial_number),
+      ("Purchased", item.p.purchase_date ~ " · " ~ (item.p.retailer or "-") ~ " · Rs " ~ "%.0f"|format(item.p.purchase_price|float)),
+      ("Warranty", item.p.warranty_months ~ " months" ~ (" + " ~ item.p.extended_months ~ " extended" if item.p.extended_months else "") ~ " · ends " ~ item.expiry)
+    ]) }}
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      {{ ui.badge("Covered: " ~ (item.pol.covered_faults[:3]|join(", ")) ~ "…", "valid") }}
+      {{ ui.badge("Excluded: " ~ (item.pol.excluded_faults[:2]|join(", ")), "invalid") }}
+      {{ ui.badge("Report within " ~ item.pol.claim_reporting_period_days ~ " days", "info") }}
+      {{ ui.badge("Required docs: " ~ item.pol.mandatory_documents|join(", "), "neutral") }}
+    </div>
+    <div style="margin-top:14px;">
+      <a class="ax-btn ax-btn--primary ax-btn--sm" href="{{ url_for('new_claim_form', product_id=item.p.product_id) }}">📝 Submit a claim</a>
+    </div>
+  </div>
+</details>
+{% endfor %}
+{% endblock %}

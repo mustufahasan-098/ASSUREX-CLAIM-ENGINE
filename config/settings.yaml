@@ -1,0 +1,10 @@
+fusion:
+  strong_match_max_diff: 0.15
+  acceptable_match_max_diff: 0.35
+  min_confidence: 0.60
+warranty_alert_days: 30
+tm_model_version: "TM-1.0"
+session_secret: "assurex-2026-techwiz-9f2c1"
+admin:
+  email: "admin@assurex.com"
+  password: "Admin@123"
