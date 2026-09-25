@@ -36,6 +36,22 @@
 {% if risk_reasons %}
   {{ ui.alert("🕵️ Fraud risk " ~ risk_score ~ "/100 — " ~ risk_reasons|join(" · "), risk_tone) }}
 {% endif %}
+{% if c.fraud and c.fraud.signals %}
+<details class="ax-details">
+  <summary>🕵️ Fraud-risk breakdown — {{ c.fraud.score }}/100 · {{ c.fraud.families }} independent indicators{% if c.fraud.escalated %} · <b>escalated</b>{% endif %}</summary>
+  <div class="ax-details-body" style="overflow-x:auto;">
+    <table class="ax-table">
+      <thead><tr><th>Signal</th><th>Points</th><th>Evidence</th></tr></thead>
+      <tbody>
+      {% for s in c.fraud.signals %}
+        <tr><td class="ax-table-strong">{{ s.code.replace('_',' ')|title }}</td>
+            <td>+{{ s.points }}</td><td>{{ s.reason }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+{% endif %}
 
 {{ ui.section("⚖️", "Rules, documents & comparison") }}
 {% set r = c.rules_outcome %}

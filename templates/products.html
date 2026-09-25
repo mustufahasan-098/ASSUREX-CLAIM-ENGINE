@@ -2,7 +2,7 @@
 {% import "macros.html" as ui %}
 {% block title %}My Products — AssureX{% endblock %}
 {% block content %}
-{{ ui.hero("📦", "My Products & Warranties", "Register products, track coverage, and see the exact policy rules that will evaluate your claims") }}
+{{ ui.hero("📦", "My Products & Warranties", "Pick a product from the catalog (or scan its QR), add your receipt details, and the policy computes your warranty") }}
 
 {{ ui.stat_row([
   {"label": "Products", "value": counts.total, "icon": "📦", "tone": "neutral"},
@@ -12,21 +12,51 @@
 ]) }}
 
 <details class="ax-details" {% if not items %}open{% endif %}>
-  <summary>➕ Register a new product</summary>
+  <summary>➕ Register a product</summary>
   <div class="ax-details-body">
-    <form method="post" style="max-width:640px;">
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
+      <a class="ax-btn ax-btn--primary" href="{{ url_for('smart_register') }}">🤖 Smart register — QR + AI lookup</a>
+      <span style="font-size:.78rem; color:var(--t-low);">or pick from the catalog below, or type manually</span>
+    </div>
+
+    {% if templates %}
+    <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px;">
+      <div class="ax-field" style="flex:1; min-width:260px; margin:0;">
+        <label>📋 Product catalog — pick to pre-fill</label>
+        <select class="ax-input" name="t">
+          <option value="">— choose a product —</option>
+          {% for t in templates %}
+          <option value="{{ t.id }}" {% if tpl and tpl.id == t.id %}selected{% endif %}>
+            {{ t.name }} ({{ t.brand }} · {{ t.category }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="ax-btn" type="submit">Fill from catalog</button>
+    </form>
+    {% endif %}
+
+    {% if tpl %}
+      {{ ui.alert("📋 Template applied: " ~ tpl.name ~ " — now add YOUR serial, purchase date and price from your receipt.", "info") }}
+    {% endif %}
+
+    <form method="post" style="max-width:720px;">
       <div class="ax-grid-2">
         <div class="ax-field"><label>Product name *</label>
-          <input class="ax-input" name="name" required placeholder="e.g. Smartphone"></div>
-        <div class="ax-field"><label>Category *</label>
-          <select class="ax-input" name="category">{% for c in categories %}<option>{{ c }}</option>{% endfor %}</select></div>
+          <input class="ax-input" name="name" required value="{{ tpl.name if tpl else '' }}"></div>
+        <div class="ax-field"><label>Category * (sets the warranty policy)</label>
+          <select class="ax-input" name="category" required>
+            {% for c in categories %}
+            <option value="{{ c }}" {% if tpl and tpl.category == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select></div>
         <div class="ax-field"><label>Brand *</label>
-          <input class="ax-input" name="brand" required placeholder="e.g. Samsung"></div>
-        <div class="ax-field"><label>Model *</label>
-          <input class="ax-input" name="model" required placeholder="e.g. Galaxy S22"></div>
-        <div class="ax-field"><label>Serial number *</label>
+          <input class="ax-input" name="brand" required value="{{ tpl.brand if tpl else '' }}"></div>
+        <div class="ax-field"><label>Model</label>
+          <input class="ax-input" name="model" value="{{ tpl.model if tpl else '' }}"></div>
+        <div class="ax-field"><label>Serial number * (from your product/receipt)</label>
           <input class="ax-input" name="serial" required placeholder="e.g. SN12345678"></div>
-        <div class="ax-field"><label>Purchase date *</label>
+        <div class="ax-field"><label>Purchase date * (from your receipt)</label>
           <input class="ax-input" type="date" name="purchase_date" required></div>
         <div class="ax-field"><label>Purchase price</label>
           <input class="ax-input" type="number" step="50" min="0" name="price" value="500"></div>
@@ -38,9 +68,12 @@
             <option value="12">+12 months</option>
             <option value="24">+24 months</option>
           </select></div>
+        {% if g.user.role in ('admin', 'service_center') %}
+        <div class="ax-field"><label>Register for customer (empty = yourself)</label>
+          <input class="ax-input" name="owner_email" placeholder="e.g. demo@assurex.com"></div>
+        {% endif %}
       </div>
       <button class="ax-btn ax-btn--primary" type="submit">Register product</button>
-      <span style="font-size:.78rem; color:var(--t-low); margin-left:10px;">extended months are clamped to the policy maximum</span>
     </form>
   </div>
 </details>
@@ -53,9 +86,8 @@
 <details class="ax-details">
   <summary>
     <b>{{ item.p.name }}</b> — {{ item.p.brand }} {{ item.p.model }}
-    <span style="color:var(--t-low); font-weight:500;">({{ item.p.product_id }})</span>
-    <span style="margin-left:auto;">{{ ui.badge("Warranty " ~ item.state ~ " · " ~ item.left ~ " days",
-        "invalid" if item.state == "Expired" else ("review" if item.state == "Expiring soon" else "valid")) }}</span>
+    <span style="color:var(--t-low); font-weight:500;">({{ item.p.product_id }}{% if g.user.role == 'admin' %} · {{ item.p.owner_email }}{% endif %})</span>
+    <span style="margin-left:auto;">{{ ui.badge("Warranty " ~ item.state ~ " · " ~ item.left ~ " days", "invalid" if item.state == "Expired" else ("review" if item.state == "Expiring soon" else "valid")) }}</span>
   </summary>
   <div class="ax-details-body">
     {{ ui.kv_grid([
@@ -70,9 +102,11 @@
       {{ ui.badge("Report within " ~ item.pol.claim_reporting_period_days ~ " days", "info") }}
       {{ ui.badge("Required docs: " ~ item.pol.mandatory_documents|join(", "), "neutral") }}
     </div>
+    {% if g.user.role in ('customer', 'service_center') %}
     <div style="margin-top:14px;">
       <a class="ax-btn ax-btn--primary ax-btn--sm" href="{{ url_for('new_claim_form', product_id=item.p.product_id) }}">📝 Submit a claim</a>
     </div>
+    {% endif %}
   </div>
 </details>
 {% endfor %}

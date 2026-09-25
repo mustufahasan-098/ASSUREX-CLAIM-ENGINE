@@ -4,4 +4,4 @@ firebase_service_account.json
 uploads/
 data/cards/
 _tm_extract/
-*.pyc
+*.pyc.env 

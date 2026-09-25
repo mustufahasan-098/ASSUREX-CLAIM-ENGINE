@@ -20,7 +20,7 @@ from . import models as models_mod
 from .fusion import build_summary, compare_models, decide
 from .preprocessing import build_feature_frame
 from .rules import evaluate_claim
-
+from . import fraud_intel
 ROOT = Path(__file__).resolve().parent.parent
 UPLOADS = ROOT / "uploads"
 DOC_TYPES = ["receipt", "warranty_card", "product_image",
@@ -89,7 +89,24 @@ def process_and_save(claim, docs, actor):
     m = models_mod.load_all()
     claim["claim_id"] = fdb.next_claim_id()
 
+        # ---- duplicate detection + 7-layer fraud intelligence
+    incoming = claim.pop("_dup", {}) or {}
     dup = detect_duplicates(claim, docs)
+    # preserve receipt-mismatch flags computed at upload time (app.py)
+    for k, v in incoming.items():
+        if k.startswith("doc_mismatch"):
+            dup[k] = v
+    for d in docs:
+        d["phash"] = fraud_intel.dhash_from_bytes(d["bytes"])
+    owner_claims = fdb.query("claims", "owner_email", "==", claim["user_id"])
+    serial_claims = fdb.query("claims", "serial_number", "==",
+                              claim["serial_number"])
+    all_claims = fdb.all_docs("claims", limit=500)
+    fraud = fraud_intel.analyze(claim, dup, owner_claims, serial_claims,
+                                all_claims, docs,
+                                claim.get("ocr_verification"))
+    dup["fraud_score"] = fraud["score"]
+    dup["fraud_escalated"] = fraud["escalated"]
     claim["prior_claim_count"] = dup["prior_claims"]
     claim["duplicate_invoice"] = dup["invoice_reused"]
     claim["_dup"] = dup
@@ -121,6 +138,8 @@ def process_and_save(claim, docs, actor):
     record.update({
         "owner_email": claim["user_id"], "documents": doc_meta,
         "doc_hashes": hashes, "duplicates": dup,
+        "doc_phashes": [d["phash"] for d in docs if d.get("phash")],
+        "fraud": fraud,
         "rules_outcome": res["rules"],
         "python_pred": res["py_pred"], "python_probs": res["py_probs"],
         "tm_pred": res["tm_pred"], "tm_probs": res["tm_probs"],

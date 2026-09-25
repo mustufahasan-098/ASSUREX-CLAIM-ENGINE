@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Product Catalog — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("🗃️", "Product Catalog", "Admin-maintained templates that pre-fill customer registration — customers always add their own receipt details") }}
+
+{{ ui.alert("Templates store ONLY name/brand/model/category. Serial, purchase date and price always come from the customer's receipt, and warranty months always come from the category policy — never from this catalog.", "info") }}
+
+{{ ui.section("➕", "Add a template") }}
+<div class="ax-form-card" style="max-width:720px;">
+  <form method="post">
+    <div class="ax-grid-2">
+      <div class="ax-field"><label>Product name *</label>
+        <input class="ax-input" name="name" required placeholder="e.g. Haier HRF-336 Fridge"></div>
+      <div class="ax-field"><label>Category *</label>
+        <select class="ax-input" name="category" required>
+          {% for c in categories %}<option>{{ c }}</option>{% endfor %}
+        </select></div>
+      <div class="ax-field"><label>Brand *</label>
+        <input class="ax-input" name="brand" required placeholder="e.g. Haier"></div>
+      <div class="ax-field"><label>Model</label>
+        <input class="ax-input" name="model" placeholder="e.g. HRF-336"></div>
+    </div>
+    <button class="ax-btn ax-btn--primary" type="submit">Add template</button>
+  </form>
+</div>
+
+{{ ui.section("📋", "Catalog ({} templates)".format(templates|length)) }}
+{% if not templates %}
+  {{ ui.empty_state("🗃️", "Catalog is empty", "Add templates above so customers can register common products with one click.") }}
+{% else %}
+<div class="ax-card" style="overflow-x:auto;">
+  <table class="ax-table">
+    <thead><tr><th>Name</th><th>Brand</th><th>Model</th><th>Category</th><th></th></tr></thead>
+    <tbody>
+    {% for t in templates %}
+    <tr>
+      <td class="ax-table-strong">{{ t.name }}</td>
+      <td>{{ t.brand }}</td><td>{{ t.model or "—" }}</td><td>{{ t.category }}</td>
+      <td>
+        <form method="post" style="display:inline;">
+          <input type="hidden" name="action" value="remove">
+          <input type="hidden" name="tid" value="{{ t.id }}">
+          <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit">🗑️ Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -13,14 +13,6 @@ Patterns used:
 
 Run:  python app.py   ->  http://localhost:5000
 """
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # .env optional - GROQ_API_KEY may be set in env
-
-
-from src import smart_lookup
 from src import product_catalog
 import hashlib
 import io
@@ -785,93 +777,6 @@ def admin_templates():
     return render_template("admin_templates.html",
                            templates=product_catalog.load_templates(),
                            categories=categories)
-
-
-# ------------------------------------------------- smart product register
-@app.route("/products/smart", methods=["GET", "POST"])
-@login_required()
-def smart_register():
-    m = models_mod.load_all()
-    categories = list(m["policies"])
-    if request.method == "POST":
-        query = None
-        qr = request.files.get("qr")
-        typed = request.form.get("query", "").strip()
-        if qr and qr.filename:
-            decoded = smart_lookup.decode_qr(qr.read())
-            if decoded:
-                query = decoded
-                flash(f"📷 QR decoded: “{decoded}”", "success")
-            else:
-                flash("No QR code found in that image - type the product "
-                      "name instead.", "warning")
-        if not query and typed:
-            query = typed
-        if not query:
-            flash("Upload a QR image or type a product name.", "error")
-            return redirect(url_for("smart_register"))
-        result = smart_lookup.lookup_product(query, categories)
-        if not result.get("ok"):
-            flash(f"ℹ️ {result.get('error')}", "warning")
-        return render_template("smart_register.html", step="confirm",
-                               query=query, result=result,
-                               categories=categories,
-                               policies=m["policies"])
-    return render_template("smart_register.html", step="scan",
-                           categories=categories)
-
-
-@app.route("/products/smart/save", methods=["POST"])
-@login_required()
-def smart_register_save():
-    m = models_mod.load_all()
-    policies = m["policies"]
-    user = g.user
-    name = request.form.get("name", "").strip()
-    category = request.form.get("category", "")
-    brand = request.form.get("brand", "").strip()
-    model = request.form.get("model", "").strip()
-    serial = request.form.get("serial", "").strip()
-    purchase = request.form.get("purchase_date", "")
-    if not all([name, brand, serial, purchase]) \
-            or category not in policies:
-        flash("All fields marked * are required.", "error")
-        return redirect(url_for("smart_register"))
-    # admins / service centers may register on behalf of a customer
-    owner = user["email"]
-    if user["role"] in ("admin", "service_center"):
-        chosen = request.form.get("owner_email", "").strip().lower()
-        if chosen:
-            if fdb.get_doc("users", chosen):
-                owner = chosen
-            else:
-                flash(f"Owner {chosen} not found - registered to your "
-                      f"account instead.", "warning")
-    pol = policies[category]
-    ext = min(int(request.form.get("extended", 0) or 0),
-              int(pol["extended_warranty_max_months"]))
-    pid = f"PRD-{uuid.uuid4().hex[:6].upper()}"
-    purchase_d = parse_date(purchase)
-    fdb.set_doc("products", pid, {
-        "product_id": pid, "owner_email": owner,
-        "name": name, "product_category": category,
-        "brand": brand, "model": model, "serial_number": serial,
-        "purchase_date": purchase_d.isoformat(),
-        "purchase_price": float(request.form.get("price", 0) or 0),
-        "retailer": request.form.get("retailer", "").strip(),
-        "warranty_type": "extended" if ext else "standard",
-        "warranty_months": pol["standard_warranty_months"],
-        "extended_months": ext,
-        "registered_via": "smart_register",
-        "ai_assisted": True,
-        "human_verified": True})
-    fdb.log_audit("product_registered_smart", user["email"],
-                  {"product_id": pid, "owner": owner, "ai_assisted": True})
-    end = add_months(purchase_d, int(pol["standard_warranty_months"]) + ext)
-    flash(f"✅ Registered {name} ({pid}) for {owner}. "
-          f"Warranty until {end.isoformat()}.", "success")
-    return redirect(url_for("products"))
-
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)

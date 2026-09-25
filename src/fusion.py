@@ -107,6 +107,12 @@ def decide(rule_out, cmp, py_pred, tm_pred, py_probs, tm_probs, cfg, dup):
                       + str(dup.get("doc_mismatch_note",
                                     "uploaded receipt does not match the "
                                     "registered product")))
+    fs = int(dup.get("fraud_score", 0) or 0)
+    if fs >= 60:
+        oppose.append(f"High fraud risk ({fs}/100) - multiple independent "
+                      f"risk indicators; routed for manual verification")
+        if final in ("Likely Valid", "Likely Invalid"):
+            final = "Manual Review Required"
         if final == "Likely Valid":
             final = "Manual Review Required"
     # ---- confidence annotations (never change the decision, only explain)

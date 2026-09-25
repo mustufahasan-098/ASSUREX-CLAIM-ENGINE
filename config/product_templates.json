@@ -1,0 +1,19 @@
+{
+  "templates": [
+    {"id": "TPL-001", "name": "Samsung Galaxy S22", "brand": "Samsung", "model": "Galaxy S22", "category": "Electronics"},
+    {"id": "TPL-002", "name": "Apple iPhone 15", "brand": "Apple", "model": "iPhone 15", "category": "Electronics"},
+    {"id": "TPL-003", "name": "Sony Bravia X75 TV", "brand": "Sony", "model": "Bravia X75", "category": "Electronics"},
+    {"id": "TPL-004", "name": "LG OLED C3 55in TV", "brand": "LG", "model": "OLED C3", "category": "Electronics"},
+    {"id": "TPL-005", "name": "HP Pavilion 15 Laptop", "brand": "HP", "model": "Pavilion 15", "category": "Electronics"},
+    {"id": "TPL-006", "name": "Xiaomi Redmi Note 13", "brand": "Xiaomi", "model": "Redmi Note 13", "category": "Electronics"},
+    {"id": "TPL-007", "name": "Samsung RT28 Refrigerator", "brand": "Samsung", "model": "RT28", "category": "Home Appliances"},
+    {"id": "TPL-008", "name": "LG Fridge 340L", "brand": "LG", "model": "Fridge 340L", "category": "Home Appliances"},
+    {"id": "TPL-009", "name": "Whirlpool WM 2500 Washing Machine", "brand": "Whirlpool", "model": "WM 2500", "category": "Home Appliances"},
+    {"id": "TPL-010", "name": "IFB Senorita SX Washing Machine", "brand": "IFB", "model": "Senorita SX", "category": "Home Appliances"},
+    {"id": "TPL-011", "name": "Bosch Serie 6 Washer", "brand": "Bosch", "model": "Serie 6", "category": "Home Appliances"},
+    {"id": "TPL-012", "name": "Bosch GSR 18V Cordless Drill", "brand": "Bosch", "model": "GSR 18V", "category": "Power Tools"},
+    {"id": "TPL-013", "name": "DeWalt DCD771 Drill", "brand": "DeWalt", "model": "DCD771", "category": "Power Tools"},
+    {"id": "TPL-014", "name": "Makita HP457 Hammer Drill", "brand": "Makita", "model": "HP457", "category": "Power Tools"},
+    {"id": "TPL-015", "name": "Black+Decker CD701 Drill", "brand": "Black+Decker", "model": "CD701", "category": "Power Tools"}
+  ]
+}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Smart Register — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("🤖", "Smart Product Registration", "Scan a QR code or type a product name — AI suggests the details, you verify them, the policy sets the warranty") }}
+
+{% if step == "scan" %}
+<div class="ax-grid-2">
+  <div class="ax-form-card">
+    <h4>📷 Step 1 — Scan or type</h4>
+    <form method="post" enctype="multipart/form-data">
+      <div class="ax-field">
+        <label>QR code image (from product box)</label>
+        <input class="ax-input" type="file" name="qr" accept=".png,.jpg,.jpeg">
+      </div>
+      <div class="ax-field">
+        <label>…or type the product name</label>
+        <input class="ax-input" name="query" placeholder="e.g. Samsung RT28 Refrigerator">
+      </div>
+      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit">🔍 Look up product</button>
+    </form>
+  </div>
+  <div class="ax-card">
+    <h4>⚠️ How this works (and what the AI can NOT do)</h4>
+    <p style="font-size:.88rem;">
+      The AI suggests <b>brand, model and category</b>. You must verify every field before saving.<br><br>
+      ✅ Warranty duration comes from the <b>local policy file</b> for the chosen category.<br>
+      ❌ The AI never decides warranty terms, never evaluates claims, and nothing is saved without your confirmation.<br><br>
+      Serial number, purchase date and price are always entered manually — they come from your receipt, not the internet.
+    </p>
+  </div>
+</div>
+
+{% else %}
+
+{{ ui.alert("📷 Decoded input: “" ~ query ~ "” — review the AI suggestion below and correct anything before saving.", "info") }}
+
+<div class="ax-grid-2">
+  {% if result.ok %}
+  <div class="ax-card">
+    <h4>🤖 AI suggestion <span class="ax-badge ax-badge--info">verify before saving</span></h4>
+    {{ ui.kv_grid([
+      ("Suggested name", result.suggestion.product_name),
+      ("Brand", result.suggestion.brand),
+      ("Model", result.suggestion.model or "—"),
+      ("AI-estimated typical warranty", result.suggestion.typical_warranty_months ~ " months (informational only — the category policy sets the actual warranty)"),
+      ("Notes", result.suggestion.notes or "—")
+    ]) }}
+    <p style="font-size:.74rem; color:var(--t-low); margin-top:10px;">Suggested by {{ result.model }} via Groq API · human verification required · see AI_USAGE.md</p>
+  </div>
+  {% else %}
+  <div class="ax-card">
+    <h4>⚠️ AI lookup unavailable</h4>
+    <p style="font-size:.88rem;">{{ result.error }}</p>
+    <p style="font-size:.88rem;">Fill the form manually — everything works without the AI.</p>
+  </div>
+  {% endif %}
+
+  <div class="ax-form-card">
+    <h4>✍️ Step 2 — Verify & complete</h4>
+    <form method="post" action="{{ url_for('smart_register_save') }}">
+      <div class="ax-grid-2">
+        <div class="ax-field"><label>Product name *</label>
+          <input class="ax-input" name="name" required
+                 value="{{ result.suggestion.product_name if result.ok else '' }}"></div>
+        <div class="ax-field"><label>Category * (sets the warranty policy)</label>
+          <select class="ax-input" name="category" required>
+            {% for c in categories %}
+            <option value="{{ c }}" {% if result.ok and result.suggestion.category == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select></div>
+        <div class="ax-field"><label>Brand *</label>
+          <input class="ax-input" name="brand" required
+                 value="{{ result.suggestion.brand if result.ok else '' }}"></div>
+        <div class="ax-field"><label>Model</label>
+          <input class="ax-input" name="model"
+                 value="{{ result.suggestion.model if result.ok else '' }}"></div>
+        <div class="ax-field"><label>Serial number * (from the product/receipt)</label>
+          <input class="ax-input" name="serial" required placeholder="e.g. SN12345678"></div>
+        <div class="ax-field"><label>Purchase date * (from your receipt)</label>
+          <input class="ax-input" type="date" name="purchase_date" required></div>
+        <div class="ax-field"><label>Purchase price</label>
+          <input class="ax-input" type="number" step="50" min="0" name="price" value="500"></div>
+        <div class="ax-field"><label>Retailer</label>
+          <input class="ax-input" name="retailer" placeholder="e.g. Demo Electronics"></div>
+        <div class="ax-field"><label>Extended warranty (months)</label>
+          <select class="ax-input" name="extended">
+            <option value="0">Standard only</option>
+            <option value="12">+12 months</option>
+            <option value="24">+24 months</option>
+          </select></div>
+        {% if g.user.role in ('admin', 'service_center') %}
+        <div class="ax-field"><label>Register for customer (empty = yourself)</label>
+          <input class="ax-input" name="owner_email" placeholder="e.g. demo@assurex.com"></div>
+        {% endif %}
+      </div>
+      <label class="ax-checkline" style="margin-bottom:14px;">
+        <input type="checkbox" required checked> I have verified every field against the product and my receipt
+      </label>
+      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit">✅ Register product</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
