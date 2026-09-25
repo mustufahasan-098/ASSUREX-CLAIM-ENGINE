@@ -18,8 +18,8 @@ try:
     load_dotenv()
 except ImportError:
     pass  # .env optional - GROQ_API_KEY may be set in env
-
-
+from flask_wtf.csrf import CSRFProtect, generate_csrf
+from src import routing as service_routing
 from src import smart_lookup
 from src import product_catalog
 import hashlib
@@ -52,6 +52,7 @@ app = Flask(__name__)
 app.secret_key = SETTINGS["session_secret"]
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.jinja_env.auto_reload = True
+CSRFProtect(app)  
 
 BOOT = {"models_ok": True, "fb_ok": True}
 try:
@@ -87,10 +88,13 @@ NAV = {
 
 
 @app.context_processor
+
 def inject_globals():
     user = getattr(g, "user", None)
     return {"current_user": user,
-            "nav_items": NAV.get(user["role"], []) if user else []}
+            "nav_items": NAV.get(user["role"], []) if user else [],
+            "csrf_token": generate_csrf}
+   
 
 
 def login_required(roles=None):
@@ -114,7 +118,15 @@ def login_required(roles=None):
         return wrapper
     return deco
 
-
+# -------------------------------------------------- security headers
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Cache-Control"] = "no-store"   # no claim data cached
+    return response
 def fraud_risk(c):
     """Reads the stored 7-layer fraud analysis; falls back to the legacy
     computation for claims created before the upgrade."""
@@ -691,7 +703,13 @@ def review_action(cid):
     cs.update_claim(cid, {"status": status, "reviewer": user["email"],
                           "reviewer_comment": comment,
                           "reviewer_decision": decision,
-                          "override": override},
+                          "override": override,
+                          # the human decision becomes the effective outcome;
+                          # the AI recommendation is preserved in
+                          # ai_recommendation + the audit trail
+                          "ai_recommendation": c.get("final_decision"),
+                          "final_decision": ("Likely Valid" if status == "Approved"
+                                              else "Likely Invalid")},
                     event=f"Reviewer {status.lower()}"
                           + (" — override of AI recommendation" if override
                              else ""),
@@ -739,11 +757,43 @@ def admin():
              "Manual Review Required": "Manual Review"}[label], "neutral"),
             pct))
 
+    from collections import Counter
+    chart_labels = ["Likely Valid", "Likely Invalid", "Manual Review"]
+    chart_values = [by_final.get(l, 0) for l in chart_labels]
+
+    cat_counts = Counter(c.get("product_category", "Other") for c in claims)
+    category_labels = list(cat_counts.keys())
+    category_values = list(cat_counts.values())
+
+    fault_counts = Counter(c.get("fault_category", "unknown").replace("_", " ")
+                           for c in claims).most_common(8)
+    fault_labels = [f for f, _ in fault_counts] or ["none"]
+    fault_values = [n for _, n in fault_counts] or [0]
+
+    day_counts = Counter((c.get("created_at") or "")[:10] for c in claims
+                         if (c.get("created_at") or "")[:10])
+    days_sorted = sorted(day_counts)
+    day_labels = [d[5:] for d in days_sorted] or ["none"]
+    day_values = [day_counts[d] for d in days_sorted] or [0]
+
+    reject_reasons = Counter()
+    for c in claims:
+        for hf in (c.get("rules_outcome", {}).get("hard_fails") or []):
+            reject_reasons[hf.split("(")[0].strip()[:38]] += 1
+    reject_sorted = reject_reasons.most_common(6)
+    reject_labels = [r for r, _ in reject_sorted] or ["no rejections yet"]
+    reject_values = [n for _, n in reject_sorted] or [0]
+
     return render_template(
         "admin.html", empty=False, claims=claims, users=users, audit=audit,
         total=len(claims), by_final=by_final, pending=pending,
         disagreements=disagreements, dupes=dupes,
-        avg_py=avg_py, avg_tm=avg_tm, chart=chart)
+        avg_py=avg_py, avg_tm=avg_tm,
+        chart_labels=chart_labels, chart_values=chart_values,
+        category_labels=category_labels, category_values=category_values,
+        fault_labels=fault_labels, fault_values=fault_values,
+        day_labels=day_labels, day_values=day_values,
+        reject_labels=reject_labels, reject_values=reject_values)
 
 
 @app.route("/admin/export")
@@ -1040,6 +1090,67 @@ def claim_close(cid):
     fdb.notify(c["owner_email"], cid, "Claim " + cid + " has been closed.")
     flash("🔒 Claim " + cid + " closed.", "success")
     return redirect(url_for("claim_detail", cid=cid))
+# ------------------------------------------------ intelligent routing
+@app.route("/claim/<cid>/dispatch")
+@login_required()
+def claim_dispatch(cid):
+    """Match an approved claim to certified repair centers."""
+    c = fdb.get_doc("claims", cid)
+    if not c or not _can_view(g.user, c):
+        abort(404)
+    if c["final_decision"] != "Likely Valid" or \
+            c["status"] not in ("Approved", "Closed"):
+        flash("Dispatch is available for approved claims only.", "warning")
+        return redirect(url_for("claim_detail", cid=cid))
+    city = c.get("service_city") or request.args.get("city", "")
+    matches = service_routing.match_centers(c, city)
+    return render_template("claim_dispatch.html", c=c, matches=matches,
+                           city=city or None,
+                           dispatch=c.get("dispatch"))
 
+
+@app.route("/claim/<cid>/dispatch/confirm", methods=["POST"])
+@login_required()
+def claim_dispatch_confirm(cid):
+    """Confirm dispatch to the chosen center - records the assignment,
+    updates the claim status, notifies, and logs the audit trail."""
+    user = g.user
+    c = fdb.get_doc("claims", cid)
+    if not c:
+        abort(404)
+    if c.get("owner_email") != user["email"] and user["role"] not in \
+            ("admin", "service_center"):
+        abort(403)
+    center_id = request.form.get("center_id", "")
+    cfg = service_routing.load_centers()
+    center = next((x for x in cfg["centers"] if x["id"] == center_id), None)
+    if not center:
+        flash("Choose a valid service center.", "error")
+        return redirect(url_for("claim_dispatch", cid=cid))
+    if center["id"] not in center["categories"] and \
+            c["product_category"] not in center["categories"]:
+        flash("That center is not certified for this product category.",
+              "error")
+        return redirect(url_for("claim_dispatch", cid=cid))
+
+    deadline = service_routing.sla_deadline(center["sla_days"])
+    dispatch = {"center_id": center["id"], "center_name": center["name"],
+                "center_city": center["city"], "center_phone": center["phone"],
+                "sla_days": center["sla_days"], "deadline": deadline,
+                "assigned_at": date.today().isoformat(),
+                "assigned_by": user["email"], "status": "Repair Scheduled"}
+    cs.update_claim(cid, {"dispatch": dispatch, "status": "Under Evaluation"},
+                    event=f"Dispatched to {center['name']} - SLA deadline "
+                          f"{deadline} (repair scheduled)",
+                    actor=user["email"])
+    fdb.log_audit("claim_dispatched", user["email"],
+                  {"claim_id": cid, "center": center["id"],
+                   "sla": center["sla_days"]})
+    fdb.notify(c["owner_email"], cid,
+               f"Claim {cid}: repair scheduled at {center['name']} - "
+               f"expected by {deadline}. Contact: {center['phone']}")
+    flash(f"🔧 Repair scheduled at {center['name']} — SLA deadline "
+          f"{deadline}.", "success")
+    return redirect(url_for("claim_detail", cid=cid))
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)

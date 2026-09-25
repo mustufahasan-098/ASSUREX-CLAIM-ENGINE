@@ -67,17 +67,35 @@ def category_price_stats():
     return _PRICE_CACHE
 
 
+# Realistic retail reference prices (PKR) per category.
+# The synthetic dataset's prices (uniform Rs 80-3,000) were designed for
+# decision-pattern coverage, not market realism - so the fraud layer uses
+# real-world reference values instead. Training data is intentionally
+# untouched; this affects only live fraud scoring.
+REFERENCE_PRICES = {
+    "Electronics": 85000,       # phones, laptops, TVs
+    "Home Appliances": 65000,   # fridges, washing machines
+    "Power Tools": 15000,       # drills, saws
+}
+
+
 def price_signal(claim):
-    stats = category_price_stats()
     cat = claim.get("product_category")
-    if cat not in stats:
+    med = REFERENCE_PRICES.get(cat)
+    if not med:
         return []
-    med = stats[cat]["median"]
     price = float(claim.get("purchase_price") or 0)
-    if price and med and price >= med * 4:
+    if not price:
+        return []
+    if price >= med * 8:
         return [("price_outlier", 15,
                  f"Registered price Rs {price:,.0f} is {price / med:.1f}x "
-                 f"the {cat} category median (Rs {med:,.0f})")]
+                 f"the realistic {cat} reference (Rs {med:,.0f})")]
+    if price <= med * 0.05:
+        return [("price_outlier", 15,
+                 f"Registered price Rs {price:,.0f} is implausibly low for "
+                 f"{cat} (reference Rs {med:,.0f}) - please verify the "
+                 f"receipt")]
     return []
 
 

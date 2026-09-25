@@ -4,6 +4,10 @@
 {% block content %}
 {{ ui.decision_banner(c.final_decision, "Claim " ~ c.claim_id ~ " · status " ~ c.status ~ " · " ~ c.consistency ~ " · confidence difference " ~ "%.3f"|format(c.conf_diff|float)) }}
 
+{% if c.ai_recommendation and c.ai_recommendation != c.final_decision %}
+  {{ ui.alert("AI recommended: " ~ c.ai_recommendation ~ " — overridden by reviewer " ~ (c.reviewer or "") ~ ". The original model outputs are preserved in the audit trail.", "review") }}
+{% endif %}
+
 {{ ui.stat_row([
   {"label": "Python model", "value": py_short, "icon": "🐍", "tone": py_tone},
   {"label": "Teachable Machine", "value": tm_short, "icon": "🖼️", "tone": tm_tone},
@@ -36,6 +40,7 @@
 {% if risk_reasons %}
   {{ ui.alert("🕵️ Fraud risk " ~ risk_score ~ "/100 — " ~ risk_reasons|join(" · "), risk_tone) }}
 {% endif %}
+
 {% if c.fraud and c.fraud.signals %}
 <details class="ax-details">
   <summary>🕵️ Fraud-risk breakdown — {{ c.fraud.score }}/100 · {{ c.fraud.families }} independent indicators{% if c.fraud.escalated %} · <b>escalated</b>{% endif %}</summary>
@@ -120,12 +125,29 @@
 {{ ui.section("🕓", "Timeline") }}
 <div class="ax-card">{{ ui.timeline(c.timeline) }}</div>
 
+{% if c.dispatch %}
+{{ ui.section("🔧", "Repair management") }}
+<div class="ax-card">
+  {{ ui.kv_grid([
+    ("Service center", c.dispatch.center_name),
+    ("Status", c.dispatch.status),
+    ("SLA deadline", c.dispatch.deadline),
+    ("Contact", c.dispatch.center_phone),
+    ("Assigned by", c.dispatch.assigned_by ~ " on " ~ c.dispatch.assigned_at)
+  ]) }}
+  {{ ui.alert("Repair scheduled through the certified network — the customer is notified automatically with the SLA deadline and center contact.", "info") }}
+</div>
+{% endif %}
+
 <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
   <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Download full report</a>
   {% if g.user.role in ('reviewer', 'admin') and c.status in ('Approved', 'Rejected') %}
   <form method="post" action="{{ url_for('claim_close', cid=c.claim_id) }}" style="display:inline;">
     <button class="ax-btn" type="submit">🔒 Close claim</button>
   </form>
+  {% endif %}
+  {% if c.final_decision == 'Likely Valid' and c.status in ('Approved', 'Closed') and not c.dispatch %}
+  <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_dispatch', cid=c.claim_id) }}">🔧 Schedule Repair</a>
   {% endif %}
   <a class="ax-btn" href="{{ url_for('new_claim') }}">➕ New claim</a>
   {% if g.user.role in ('customer','service_center') %}

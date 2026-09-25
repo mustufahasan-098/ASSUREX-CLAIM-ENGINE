@@ -1,0 +1,19 @@
+{
+  "centers": [
+    {"id": "SC-001", "name": "AssureX Certified Center - Karachi (Gulshan)", "city": "Karachi", "categories": ["Electronics", "Home Appliances"], "sla_days": 3, "rating": 4.8, "phone": "+92-21-3400-0001"},
+    {"id": "SC-002", "name": "AssureX Certified Center - Karachi (Saddar)", "city": "Karachi", "categories": ["Electronics", "Power Tools"], "sla_days": 2, "rating": 4.6, "phone": "+92-21-3400-0002"},
+    {"id": "SC-003", "name": "AssureX Certified Center - Lahore (DHA)", "city": "Lahore", "categories": ["Electronics", "Home Appliances"], "sla_days": 3, "rating": 4.7, "phone": "+92-42-3500-0003"},
+    {"id": "SC-004", "name": "AssureX Certified Center - Lahore (Johar Town)", "city": "Lahore", "categories": ["Home Appliances"], "sla_days": 4, "rating": 4.5, "phone": "+92-42-3500-0004"},
+    {"id": "SC-005", "name": "AssureX Certified Center - Islamabad (F-11)", "city": "Islamabad", "categories": ["Electronics", "Power Tools", "Home Appliances"], "sla_days": 2, "rating": 4.9, "phone": "+92-51-2600-0005"},
+    {"id": "SC-006", "name": "AssureX Certified Center - Rawalpindi (Saddar)", "city": "Rawalpindi", "categories": ["Electronics"], "sla_days": 3, "rating": 4.4, "phone": "+92-51-2900-0006"},
+    {"id": "SC-007", "name": "AssureX Certified Center - Faisalabad", "city": "Faisalabad", "categories": ["Home Appliances", "Power Tools"], "sla_days": 4, "rating": 4.5, "phone": "+92-41-8700-0007"},
+    {"id": "SC-008", "name": "AssureX Certified Center - Multan", "city": "Multan", "categories": ["Electronics", "Home Appliances"], "sla_days": 4, "rating": 4.3, "phone": "+92-61-4500-0008"}
+  ],
+  "default_city": "Karachi",
+  "nearby": {
+    "Rawalpindi": "Islamabad",
+    "Faisalabad": "Lahore",
+    "Multan": "Lahore",
+    "Islamabad": "Rawalpindi"
+  }
+}

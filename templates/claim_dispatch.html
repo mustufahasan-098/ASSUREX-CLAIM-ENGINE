@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Schedule Repair — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("🔧", "Intelligent Claim Routing", "Matching your approved claim to the nearest certified repair center by category, city and SLA") }}
+
+{% if dispatch %}
+  {{ ui.alert("This claim is already dispatched to " ~ dispatch.center_name ~ " (SLA deadline " ~ dispatch.deadline ~ ").", "info") }}
+{% endif %}
+
+{{ ui.kv_grid([
+  ("Claim", c.claim_id),
+  ("Product", c.brand ~ " " ~ c.model ~ " (" ~ c.product_category ~ ")"),
+  ("Decision", c.final_decision ~ " / " ~ c.status)
+]) }}
+
+{{ ui.section("📍", "Your city (for nearest-center matching)") }}
+<div class="ax-card">
+  <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+    <div class="ax-field" style="flex:1; min-width:220px; margin:0;">
+      <label>City</label>
+      <input class="ax-input" name="city" value="{{ city or '' }}" placeholder="e.g. Karachi, Lahore, Islamabad">
+    </div>
+    <button class="ax-btn" type="submit">🔄 Find nearest centers</button>
+  </form>
+</div>
+
+{{ ui.section("🏆", "Recommended certified centers") }}
+{% if not matches %}
+  {{ ui.empty_state("🔧", "No certified center found", "No center in the network is certified for this product category yet - contact support.") }}
+{% else %}
+{% for m in matches %}
+<div class="ax-card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <b style="font-size:1.02rem;">{{ m.center.name }}</b>
+      <div style="font-size:.84rem; color:var(--t-mid); margin-top:3px;">
+        ⭐ {{ m.center.rating }} · SLA {{ m.center.sla_days }} days · 📞 {{ m.center.phone }}
+      </div>
+      <div style="font-size:.8rem; color:var(--t-low); margin-top:3px;">
+        {{ m.reason }} · certified: {{ m.center.categories|join(", ") }}
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div class="ax-kv-label">Expected by</div>
+      <div style="font-weight:700;">{{ m.eta }}</div>
+      {% if not dispatch %}
+      <form method="post" action="{{ url_for('claim_dispatch_confirm', cid=c.claim_id) }}" style="margin-top:8px;">
+        <input type="hidden" name="center_id" value="{{ m.center.id }}">
+        <button class="ax-btn ax-btn--primary ax-btn--sm" type="submit">✅ Schedule here</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<div style="margin-top:14px;">
+  <a class="ax-btn" href="{{ url_for('claim_detail', cid=c.claim_id) }}">← Back to claim</a>
+</div>
+{% endblock %}

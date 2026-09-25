@@ -48,4 +48,8 @@
     {% block auth %}{% endblock %}
   {% endif %}
 </body>
+{% if csrf_token %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endif %}
+<script src="{{ url_for('static', filename='csrf.js') }}"></script>
 </html>

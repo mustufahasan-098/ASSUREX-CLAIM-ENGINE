@@ -23,6 +23,24 @@ import pandas as pd
 
 from .features import compute_derived, to_bool
 
+# Model-input price clamp (train/serve skew guard): the synthetic training
+# dataset sampled purchase_price uniformly in [80, 3000]; live
+# registrations carry realistic market prices (e.g. Rs 90,000 phones).
+# Values far outside the training range make the tree ensemble hedge
+# unnaturally, so the MODEL FEATURE is winsorized to the training range.
+# This is a no-op for all training data (already in range) and only
+# stabilizes live inference. The fraud layer reads the RAW price
+# separately (realistic reference prices) - each layer gets the input
+# it was designed for.
+MODEL_PRICE_RANGE = (80.0, 3000.0)
+
+
+def _clamp_price(value):
+    if value != value:      # NaN stays NaN (imputer handles it)
+        return value
+    return min(max(value, MODEL_PRICE_RANGE[0]), MODEL_PRICE_RANGE[1])
+
+
 NUMERIC_FEATURES = [
     "product_age_days",
     "warranty_days_remaining",
@@ -95,7 +113,8 @@ def build_model_features(claim, policies):
         # ---- raw numerics
         "warranty_months": _num_or_nan(claim.get("warranty_months"), int),
         "extended_months": _num_or_nan(claim.get("extended_months"), int),
-        "purchase_price": _num_or_nan(claim.get("purchase_price"), float),
+        "purchase_price": _clamp_price(
+            _num_or_nan(claim.get("purchase_price"), float)),
         "repair_count": _num_or_nan(claim.get("repair_count"), int),
         "prior_claim_count": _num_or_nan(claim.get("prior_claim_count"), int),
         # ---- booleans as 0/1
