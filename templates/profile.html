@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}My Profile — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("🧑", "My Profile", "View and update your account details") }}
+<div class="ax-grid-2">
+  <div class="ax-form-card">
+    <h4>✏️ Update profile</h4>
+    <form method="post">
+      <div class="ax-field"><label>Full name *</label>
+        <input class="ax-input" name="name" required value="{{ current_user.name }}"></div>
+      <div class="ax-field"><label>Email (User ID — read-only)</label>
+        <input class="ax-input" value="{{ current_user.email }}" disabled></div>
+      <div class="ax-field"><label>Role</label>
+        <input class="ax-input" value="{{ current_user.role.replace('_',' ')|title }}" disabled></div>
+      <div class="ax-field"><label>New password (leave empty to keep current)</label>
+        <input class="ax-input" type="password" name="password" minlength="6" placeholder="min 6 characters"></div>
+      <button class="ax-btn ax-btn--primary" type="submit">💾 Save changes</button>
+    </form>
+  </div>
+  <div>
+    <div class="ax-card" style="text-align:center;">
+      <h4>📸 Profile photo</h4>
+      {% if current_user.photo %}
+        <img src="{{ url_for('profile_photo', email=current_user.email) }}" alt="profile photo"
+             style="width:120px; height:120px; border-radius:50%; object-fit:cover;
+                    border:3px solid var(--acc); box-shadow:var(--sh-2); margin:10px 0;">
+      {% else %}
+        <div style="width:120px; height:120px; border-radius:50%; margin:10px auto;
+                    display:flex; align-items:center; justify-content:center;
+                    font-size:2.6rem; font-weight:800;
+                    background:var(--acc-tint); color:var(--acc-hi); border:3px solid var(--acc);">
+          {{ current_user.name[:1]|upper }}
+        </div>
+      {% endif %}
+      <form method="post" action="{{ url_for('profile_photo_upload') }}" enctype="multipart/form-data" style="margin-top:10px;">
+        <div class="ax-field" style="text-align:left;">
+          <label>Upload photo (JPG/PNG, max 2 MB)</label>
+          <input class="ax-input" type="file" name="photo" accept=".jpg,.jpeg,.png" required>
+        </div>
+        <button class="ax-btn ax-btn--primary ax-btn--block" type="submit">📤 Upload photo</button>
+      </form>
+      {% if current_user.photo %}
+      <form method="post" action="{{ url_for('profile_photo_remove') }}" style="margin-top:8px;">
+        <button class="ax-btn ax-btn--danger ax-btn--block" type="submit">🗑️ Remove photo</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="ax-card">
+      <h4>🔒 Account security</h4>
+      {{ ui.kv_grid([
+        ("User ID (email)", current_user.email),
+        ("Role", current_user.role),
+        ("Member since", current_user.get("created_at", "—")),
+        ("Failed login attempts", current_user.get("failed_attempts", 0) ~ " (locks at 5)")
+      ]) }}
+      {{ ui.alert("Photos are validated as real images (Pillow), capped at 2 MB, stored server-side, and served with access control.", "info") }}
+    </div>
+  </div>
+</div>
+{% endblock %}

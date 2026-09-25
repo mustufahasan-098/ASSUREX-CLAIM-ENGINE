@@ -1,0 +1,834 @@
+{
+  "generated": "2026-09-25T01:20:53.445992+00:00",
+  "seed": 2026,
+  "n_claims": 30,
+  "summary": {
+    "python_accuracy": 29,
+    "tm_accuracy": 30,
+    "both_correct": 29,
+    "fusion_consistent": 30,
+    "consistency": {
+      "Strong Match": 20,
+      "Weak Match": 1,
+      "Acceptable Match": 8,
+      "Model Disagreement": 1
+    },
+    "finals": {
+      "Likely Valid": 9,
+      "Manual Review Required": 11,
+      "Likely Invalid": 10
+    }
+  },
+  "claims": [
+    {
+      "claim_id": "CLM-001300",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.05930826704925019,
+          "Manual Review": 0.05110500944440219,
+          "Valid Claim": 0.8895867235063472
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 5.04929539602017e-06,
+          "Manual Review": 1.1953790135521558e-06,
+          "Valid Claim": 0.9999938011169434
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.1104,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001455",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.02125386444697969,
+          "Manual Review": 0.04259252158985495,
+          "Valid Claim": 0.9361536139631653
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 4.783606982527999e-06,
+          "Manual Review": 1.0047833711723797e-06,
+          "Valid Claim": 0.9999942779541016
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0638,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001486",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.10579798776573719,
+          "Manual Review": 0.26237348657887954,
+          "Valid Claim": 0.6318285256553833
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 8.636408892925829e-06,
+          "Manual Review": 1.5037298908282537e-06,
+          "Valid Claim": 0.9999898672103882
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.3682,
+        "consistency": "Weak Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001453",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.0840690284119367,
+          "Manual Review": 0.14349860496891792,
+          "Valid Claim": 0.7724323666191449
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 7.145431936805835e-06,
+          "Manual Review": 1.5098722769835149e-06,
+          "Valid Claim": 0.9999912977218628
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.2276,
+        "consistency": "Acceptable Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001417",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.02321561860029117,
+          "Manual Review": 0.023575040590245573,
+          "Valid Claim": 0.9532093408094632
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 6.907534498168388e-06,
+          "Manual Review": 1.99073269868677e-06,
+          "Valid Claim": 0.9999910593032837
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0468,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001494",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.035149365119150316,
+          "Manual Review": 0.04186172904568292,
+          "Valid Claim": 0.9229889058351668
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 4.137094038014766e-06,
+          "Manual Review": 1.077738147614582e-06,
+          "Valid Claim": 0.9999947547912598
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.077,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001313",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.1032321210314863,
+          "Manual Review": 0.1994627303110814,
+          "Valid Claim": 0.6973051486574322
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 4.422921847435646e-06,
+          "Manual Review": 7.748516281935736e-07,
+          "Valid Claim": 0.9999948740005493
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.3027,
+        "consistency": "Acceptable Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001473",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.05331651525805823,
+          "Manual Review": 0.14127480840095122,
+          "Valid Claim": 0.8054086763409901
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 4.177483333478449e-06,
+          "Manual Review": 7.692758572375169e-07,
+          "Valid Claim": 0.9999951124191284
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.1946,
+        "consistency": "Acceptable Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001298",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.07560784322241842,
+          "Manual Review": 0.1904660349036183,
+          "Valid Claim": 0.7339261218739637
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 9.59121280175168e-06,
+          "Manual Review": 1.4346109082907788e-06,
+          "Valid Claim": 0.9999890327453613
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.2661,
+        "consistency": "Acceptable Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001310",
+      "actual": "Valid Claim",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.019204784556528742,
+          "Manual Review": 0.005145791716783149,
+          "Valid Claim": 0.9756494237266883
+        }
+      },
+      "tm": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 5.250768936093664e-06,
+          "Manual Review": 1.5349837667599786e-06,
+          "Valid Claim": 0.9999932050704956
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0243,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Valid Claim",
+      "final": "Likely Valid"
+    },
+    {
+      "claim_id": "CLM-001363",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.7716210187264564,
+          "Manual Review": 0.0728885545353203,
+          "Valid Claim": 0.15549042673822325
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999948740005493,
+          "Manual Review": 5.0873650252469815e-06,
+          "Valid Claim": 3.112326751875116e-08
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.2284,
+        "consistency": "Acceptable Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001301",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9548196449426163,
+          "Manual Review": 0.020863598922676002,
+          "Valid Claim": 0.024316756134707452
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999825954437256,
+          "Manual Review": 1.1120065209979657e-05,
+          "Valid Claim": 6.356356607284397e-06
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0452,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001367",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9975,
+          "Manual Review": 0.001875,
+          "Valid Claim": 0.000625
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999971389770508,
+          "Manual Review": 2.794551846818649e-06,
+          "Valid Claim": 1.6660607116136816e-07
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0025,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001439",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9572384715135672,
+          "Manual Review": 0.004274923286432238,
+          "Valid Claim": 0.038486605200000336
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999819993972778,
+          "Manual Review": 8.087406058621127e-06,
+          "Valid Claim": 9.940482414094731e-06
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0427,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001478",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9478950726001072,
+          "Manual Review": 0.027248953278886136,
+          "Valid Claim": 0.024855974121006614
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999809265136719,
+          "Manual Review": 9.357125236419961e-06,
+          "Valid Claim": 9.826283530856017e-06
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0521,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001433",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9540184092307965,
+          "Manual Review": 0.019747377648634032,
+          "Valid Claim": 0.02623421312056915
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999810457229614,
+          "Manual Review": 8.895697646948975e-06,
+          "Valid Claim": 1.006841648631962e-05
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.046,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001284",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9981428571428572,
+          "Manual Review": 0.00014285714285714284,
+          "Valid Claim": 0.0017142857142857142
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.999995231628418,
+          "Manual Review": 4.526329121290473e-06,
+          "Valid Claim": 2.4792126396278036e-07
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0019,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001402",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9333865980050278,
+          "Manual Review": 0.03380651327268073,
+          "Valid Claim": 0.03280688872229131
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999823570251465,
+          "Manual Review": 1.1962942153331824e-05,
+          "Valid Claim": 5.771510586782824e-06
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0666,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001385",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9928,
+          "Manual Review": 0.0016,
+          "Valid Claim": 0.005600000000000001
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999966621398926,
+          "Manual Review": 2.974082462969818e-06,
+          "Valid Claim": 3.664401049263688e-07
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0072,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001293",
+      "actual": "Invalid Claim",
+      "python": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9048003469474392,
+          "Manual Review": 0.05374315122105875,
+          "Valid Claim": 0.041456501831501825
+        }
+      },
+      "tm": {
+        "pred": "Invalid Claim",
+        "probs": {
+          "Invalid Claim": 0.9999871253967285,
+          "Manual Review": 7.739944521745201e-06,
+          "Valid Claim": 5.178351329959696e-06
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0952,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Invalid Claim",
+      "final": "Likely Invalid"
+    },
+    {
+      "claim_id": "CLM-001369",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.006894444444444445,
+          "Manual Review": 0.9111829978924135,
+          "Valid Claim": 0.08192255766314219
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 1.0165574622078566e-06,
+          "Manual Review": 0.999998927116394,
+          "Valid Claim": 1.3169703549920087e-08
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0888,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001273",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.008871159330713266,
+          "Manual Review": 0.8675509718703398,
+          "Valid Claim": 0.12357786879894692
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 2.5034255486389156e-06,
+          "Manual Review": 0.9999974966049194,
+          "Valid Claim": 1.4780636270472769e-08
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.1324,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001307",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.01806641028422456,
+          "Manual Review": 0.8555630904633391,
+          "Valid Claim": 0.12637049925243649
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 2.304411282239016e-06,
+          "Manual Review": 0.9999971389770508,
+          "Valid Claim": 5.089809178571159e-07
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.1444,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001374",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.005275326797385622,
+          "Manual Review": 0.9460040849673202,
+          "Valid Claim": 0.04872058823529412
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 3.169323576912575e-07,
+          "Manual Review": 0.9999858140945435,
+          "Valid Claim": 1.3877726814826019e-05
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.054,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001357",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Valid Claim",
+        "probs": {
+          "Invalid Claim": 0.02880163324557805,
+          "Manual Review": 0.4108168140332573,
+          "Valid Claim": 0.5603815527211645
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 1.54291299736542e-07,
+          "Manual Review": 0.9999998807907104,
+          "Valid Claim": 3.3137013133455184e-09
+        }
+      },
+      "comparison": {
+        "match": false,
+        "conf_diff": 0.4396,
+        "consistency": "Model Disagreement"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001479",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.0024545454545454545,
+          "Manual Review": 0.9866628787878788,
+          "Valid Claim": 0.01088257575757576
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 8.108277143037412e-07,
+          "Manual Review": 0.999981164932251,
+          "Valid Claim": 1.805059946491383e-05
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.0133,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001477",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.0457249185511886,
+          "Manual Review": 0.7472627516337711,
+          "Valid Claim": 0.20701232981504014
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 2.5794781866039784e-09,
+          "Manual Review": 0.9999998807907104,
+          "Valid Claim": 8.006466600818385e-08
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.2527,
+        "consistency": "Acceptable Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001354",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.01533502643450157,
+          "Manual Review": 0.7253604437003753,
+          "Valid Claim": 0.2593045298651231
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 2.7112789791061687e-09,
+          "Manual Review": 0.9999998807907104,
+          "Valid Claim": 1.0260072969003886e-07
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.2746,
+        "consistency": "Acceptable Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001276",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.019050928559870423,
+          "Manual Review": 0.8618430018719921,
+          "Valid Claim": 0.11910606956813767
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 1.0302553619112587e-06,
+          "Manual Review": 0.999998927116394,
+          "Valid Claim": 1.373531599568878e-08
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.1382,
+        "consistency": "Strong Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    },
+    {
+      "claim_id": "CLM-001498",
+      "actual": "Manual Review",
+      "python": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 0.018115772568974543,
+          "Manual Review": 0.8275974593986228,
+          "Valid Claim": 0.1542867680324026
+        }
+      },
+      "tm": {
+        "pred": "Manual Review",
+        "probs": {
+          "Invalid Claim": 2.22438416130899e-06,
+          "Manual Review": 0.9999970197677612,
+          "Valid Claim": 7.451620831488981e-07
+        }
+      },
+      "comparison": {
+        "match": true,
+        "conf_diff": 0.1724,
+        "consistency": "Acceptable Match"
+      },
+      "rules_label": "Manual Review",
+      "final": "Manual Review Required"
+    }
+  ]
+}

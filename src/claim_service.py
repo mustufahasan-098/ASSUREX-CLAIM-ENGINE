@@ -112,6 +112,11 @@ def process_and_save(claim, docs, actor):
     claim["_dup"] = dup
 
     res = process_claim(claim)
+        # derived-feature snapshot (SRS Step 3 - displayed on the result page)
+    from .features import compute_derived
+    derived = compute_derived(claim, res["policy"])
+    derived = {k: (v if not isinstance(v, list) else ", ".join(map(str, v)))
+               for k, v in derived.items()}
     final = res["decision"]["final"]
 
     # map the fusion decision onto the claim-status workflow (req xxxviii)
@@ -141,6 +146,7 @@ def process_and_save(claim, docs, actor):
         "doc_phashes": [d["phash"] for d in docs if d.get("phash")],
         "fraud": fraud,
         "rules_outcome": res["rules"],
+        "derived_features": derived,
         "python_pred": res["py_pred"], "python_probs": res["py_probs"],
         "tm_pred": res["tm_pred"], "tm_probs": res["tm_probs"],
         "conf_diff": res["comparison"]["conf_diff"],

@@ -66,9 +66,43 @@
   ("Confidence difference", "%.3f"|format(c.conf_diff|float)),
   ("Consistency", c.consistency),
   ("Model versions", c.model_versions.python ~ " · " ~ c.model_versions.tm),
-  ("Documents", c.documents|map(attribute='type')|join(", ") if c.documents else "none"),
   ("Duplicate indicators", c.duplicates.prior_claims ~ " prior · invoice reused: " ~ ("yes" if c.duplicates.invoice_reused else "no") ~ " · doc reuse: " ~ ("yes" if c.duplicates.doc_hash_reuse else "no"))
 ]) }}
+
+{% if c.documents %}
+<div class="ax-card">
+  <h4>📎 Documents on this claim ({{ c.documents|length }})</h4>
+  {% for d in c.documents %}
+  <div class="ax-doc-item">
+    <span>📎 <b>{{ d.type.replace('_',' ')|title }}</b> — {{ d.filename }} ·
+      <code>{{ d.sha256[:14] }}…</code> · {{ "%.0f"|format(d.size / 1024) }} KB</span>
+    <span style="display:flex; gap:6px;">
+      <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_doc_download', cid=c.claim_id, index=loop.index0) }}">⬇️ Download</a>
+      {% if (g.user.role == 'admin' or c.owner_email == g.user.email) and c.status not in ('Approved', 'Rejected', 'Closed') %}
+      <form method="post" action="{{ url_for('claim_doc_remove', cid=c.claim_id, index=loop.index0) }}" style="display:inline;">
+        <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit" title="Remove document">🗑️</button>
+      </form>
+      {% endif %}
+    </span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if c.derived_features %}
+{{ ui.section("🔧", "Data pre-processing (derived features)") }}
+<div class="ax-card">
+  <p style="font-size:.85rem; margin-bottom:10px;">Raw claim data is cleaned and transformed before classification: date normalization, categorical encoding, numerical scaling, and derived features (SRS Step 3):</p>
+  {{ ui.kv_grid([
+    ("Product age at fault", c.derived_features.product_age_days ~ " days" if c.derived_features.product_age_days is not none else "N/A"),
+    ("Warranty days remaining", c.derived_features.warranty_days_remaining if c.derived_features.warranty_days_remaining is not none else "N/A"),
+    ("Days from fault to claim", c.derived_features.days_to_report if c.derived_features.days_to_report is not none else "N/A"),
+    ("Missing documents", c.derived_features.missing_docs_count),
+    ("Warranty expired at fault", "Yes" if c.derived_features.warranty_expired else "No"),
+    ("Within grace period", "Yes" if c.derived_features.within_grace else "No")
+  ]) }}
+</div>
+{% endif %}
 
 {{ ui.section("🪪", "Claim Summary Card") }}
 <div class="ax-grid-2">
@@ -88,6 +122,11 @@
 
 <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
   <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Download full report</a>
+  {% if g.user.role in ('reviewer', 'admin') and c.status in ('Approved', 'Rejected') %}
+  <form method="post" action="{{ url_for('claim_close', cid=c.claim_id) }}" style="display:inline;">
+    <button class="ax-btn" type="submit">🔒 Close claim</button>
+  </form>
+  {% endif %}
   <a class="ax-btn" href="{{ url_for('new_claim') }}">➕ New claim</a>
   {% if g.user.role in ('customer','service_center') %}
   <a class="ax-btn" href="{{ url_for('claims') }}">📁 My claims</a>

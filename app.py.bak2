@@ -79,9 +79,7 @@ NAV = {
                  ("claims", "All Claims", "🗂️"),
                  ("dashboard", "Dashboard", "🏠")],
     "admin": [("admin", "Admin Analytics", "📊"),
-              ("admin_templates", "Product Catalog", "🗃️"),
               ("review_queue", "Review Queue", "⚖️"),
-              ("products", "My Products", "📦"),
               ("claims", "All Claims", "🗂️")],
 }
 
@@ -251,7 +249,7 @@ def dashboard():
             active += 1
     pending = sum(1 for c in claims if c.get("status") in
                   ("Manual Review", "Additional Information Required"))
-    doc_count = sum(len(c.get("documents", [])) for c in claims)
+
     stats = [
         {"label": "My products", "value": len(products), "icon": "📦",
          "tone": "neutral"},
@@ -263,8 +261,6 @@ def dashboard():
          "tone": "neutral"},
         {"label": "Awaiting review", "value": pending, "icon": "👤",
          "tone": "review" if pending else "neutral"},
-                 {"label": "Saved documents", "value": doc_count, "icon": "📎",
-         "tone": "neutral"},
     ]
     notes = fdb.query("notifications", "user_email", "==", user["email"])
     notes.sort(key=lambda n: str(n.get("ts", "")), reverse=True)
@@ -876,8 +872,6 @@ def smart_register_save():
           f"Warranty until {end.isoformat()}.", "success")
     return redirect(url_for("products"))
 # ------------------------------------------------------------- profile
-
-# ------------------------------------------------------------- profile
 @app.route("/profile", methods=["GET", "POST"])
 @login_required()
 def profile():
@@ -900,146 +894,6 @@ def profile():
             flash("✅ Profile updated.", "success")
             return redirect(url_for("profile"))
     return render_template("profile.html")
-
-
-# ----------------------------------------------------- profile photos
-PROFILE_PHOTOS = ROOT / "uploads" / "_profile_photos"
-ALLOWED_PHOTO_EXT = (".jpg", ".jpeg", ".png")
-MAX_PHOTO_BYTES = 2 * 1024 * 1024   # 2 MB
-
-
-@app.route("/profile/photo/upload", methods=["POST"])
-@login_required()
-def profile_photo_upload():
-    user = g.user
-    f = request.files.get("photo")
-    if not f or not f.filename:
-        flash("Choose an image file first.", "error")
-        return redirect(url_for("profile"))
-    if not f.filename.lower().endswith(ALLOWED_PHOTO_EXT):
-        flash("Only JPG or PNG images are allowed.", "error")
-        return redirect(url_for("profile"))
-    data = f.read()
-    if len(data) > MAX_PHOTO_BYTES:
-        flash("Photo must be under 2 MB.", "error")
-        return redirect(url_for("profile"))
-    # security: verify it is a REAL image, then normalise to a safe JPEG
-    try:
-        img = Image.open(io.BytesIO(data))
-        img = img.convert("RGB")
-        img.thumbnail((400, 400))
-        buf = io.BytesIO()
-        img.save(buf, "JPEG", quality=88)
-        data = buf.getvalue()
-    except Exception:
-        flash("That file is not a valid image.", "error")
-        return redirect(url_for("profile"))
-    PROFILE_PHOTOS.mkdir(parents=True, exist_ok=True)
-    safe = secure_filename(user["email"]) + ".jpg"
-    (PROFILE_PHOTOS / safe).write_bytes(data)
-    fdb.set_doc("users", user["email"], {"photo": safe}, merge=True)
-    fdb.log_audit("profile_photo_updated", user["email"])
-    flash("📸 Profile photo updated.", "success")
-    return redirect(url_for("profile"))
-
-
-@app.route("/profile/photo/remove", methods=["POST"])
-@login_required()
-def profile_photo_remove():
-    user = g.user
-    safe = secure_filename(user["email"]) + ".jpg"
-    p = PROFILE_PHOTOS / safe
-    if p.exists():
-        p.unlink()
-    fdb.set_doc("users", user["email"], {"photo": ""}, merge=True)
-    fdb.log_audit("profile_photo_removed", user["email"])
-    flash("🗑️ Photo removed.", "success")
-    return redirect(url_for("profile"))
-
-
-@app.route("/profile/photo/<email>")
-@login_required()
-def profile_photo(email):
-    """Serve a user's avatar with access control (logged-in users only)."""
-    doc = fdb.get_doc("users", email.strip().lower())
-    name = doc.get("photo") if doc else None
-    if not name:
-        abort(404)
-    p = PROFILE_PHOTOS / secure_filename(name)
-    if not p.exists():
-        abort(404)
-    return send_file(p, mimetype="image/jpeg")
-
-
-# ----------------------------------------------------- document actions
-@app.route("/claim/<cid>/doc/<int:index>")
-@login_required()
-def claim_doc_download(cid, index):
-    c = fdb.get_doc("claims", cid)
-    if not c or not _can_view(g.user, c):
-        abort(404)
-    docs = c.get("documents", [])
-    if not (0 <= index < len(docs)):
-        abort(404)
-    d = docs[index]
-    path = ROOT / "uploads" / cid / (d["type"] + "__" + secure_filename(d["filename"]))
-    if not path.exists():
-        abort(404)
-    return send_file(path, as_attachment=True, download_name=d["filename"])
-
-
-@app.route("/claim/<cid>/doc/<int:index>/remove", methods=["POST"])
-@login_required()
-def claim_doc_remove(cid, index):
-    user = g.user
-    c = fdb.get_doc("claims", cid)
-    if not c:
-        abort(404)
-    if c["owner_email"] != user["email"] and user["role"] != "admin":
-        abort(403)
-    if c["status"] in ("Approved", "Rejected", "Closed"):
-        flash("Cannot modify documents on a decided claim - the audit "
-              "trail must be preserved.", "warning")
-        return redirect(url_for("claim_detail", cid=cid))
-    docs = c.get("documents", [])
-    if not (0 <= index < len(docs)):
-        abort(404)
-    removed = docs.pop(index)
-    path = ROOT / "uploads" / cid / (removed["type"] + "__" + secure_filename(removed["filename"]))
-    if path.exists():
-        path.unlink()
-    c["documents"] = docs
-    for dtype in ("receipt", "warranty_card", "product_image",
-                  "serial_evidence", "fault_evidence", "repair_report"):
-        c["has_" + dtype] = any(d["type"] == dtype for d in docs)
-    c.pop("_id", None)
-    fdb.set_doc("claims", cid, c)
-    fdb.log_audit("document_removed", user["email"],
-                  {"claim_id": cid, "file": removed["filename"]})
-    flash("🗑️ Removed " + removed["filename"] + " - the claim's document "
-          "flags were updated.", "success")
-    return redirect(url_for("claim_detail", cid=cid))
-
-
-# ------------------------------------------------- claim close lifecycle
-@app.route("/claim/<cid>/close", methods=["POST"])
-@login_required(roles=["reviewer", "admin"])
-def claim_close(cid):
-    user = g.user
-    c = fdb.get_doc("claims", cid)
-    if not c:
-        abort(404)
-    if c["status"] not in ("Approved", "Rejected"):
-        flash("Only decided claims (Approved/Rejected) can be closed.",
-              "warning")
-        return redirect(url_for("claim_detail", cid=cid))
-    cs.update_claim(cid, {"status": "Closed"},
-                    event="Claim closed by " + user["role"],
-                    actor=user["email"])
-    fdb.log_audit("claim_closed", user["email"], {"claim_id": cid})
-    fdb.notify(c["owner_email"], cid, "Claim " + cid + " has been closed.")
-    flash("🔒 Claim " + cid + " closed.", "success")
-    return redirect(url_for("claim_detail", cid=cid))
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)

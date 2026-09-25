@@ -18,6 +18,7 @@
         {% endfor %}
       </nav>
       <div class="ax-user">
+        <a class="ax-navlink" href="{{ url_for('profile') }}"><span>🧑</span><span>My Profile</span></a>
         <div><b>{{ current_user.name }}</b></div>
         <div class="role">{{ current_user.role.replace('_', ' ')|title }}</div>
         <form method="post" action="{{ url_for('logout') }}">
