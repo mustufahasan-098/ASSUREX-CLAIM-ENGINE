@@ -47,7 +47,7 @@
         <label>Document type</label>
         <select class="ax-input" name="dtype">{% for t in doc_types %}<option value="{{ t }}">{{ t.replace('_',' ')|title }}</option>{% endfor %}</select>
       </div>
-      <button class="ax-btn ax-btn--primary" type="submit">➕ Upload & scan</button>
+      <button class="ax-btn ax-btn--primary" type="submit">➕ Upload &amp; scan</button>
     </form>
   </div>
 
@@ -69,7 +69,8 @@
   {% elif ocr and not ocr.available %}
     {{ ui.alert(ocr.note, "review") }}
   {% endif %}
-    {% if ocr_verify and ocr_verify.verdict == 'verified' %}
+
+  {% if ocr_verify and ocr_verify.verdict == 'verified' %}
     {{ ui.alert("✅ Receipt VERIFIED against registered product — " ~ ocr_verify.summary, "valid") }}
   {% elif ocr_verify and ocr_verify.verdict == 'mismatch' %}
     {{ ui.alert("⛔ Receipt does NOT match the registered product — " ~ ocr_verify.summary ~ " — the claim will be routed to manual review.", "invalid") }}
@@ -87,6 +88,7 @@
   <div class="ax-form-card">
     <form method="post" action="{{ url_for('new_claim_submit') }}">
       <input type="hidden" name="product_id" value="{{ P.product_id }}">
+      <input type="hidden" name="acting_for" value="{{ acting_for or '' }}">
       <div class="ax-grid-2">
         <div class="ax-field">
           <label>Fault type</label>
@@ -114,14 +116,16 @@
           <input class="ax-input" type="date" name="repair_date"></div>
       </div>
       <div class="ax-field">
-        <label class="ax-checkline"><input type="checkbox" name="authorized" checked> Repairs were done at an authorized service center</label>
+        <label class="ax-checkline"><input type="checkbox" name="authorized" checked> Repairs (if any) were done at an authorized service center</label>
+        <p style="font-size:.74rem; color:var(--t-low); margin-top:4px;">
+          Only relevant when previous repairs &gt; 0 — leave checked otherwise.</p>
       </div>
       <div class="ax-field">
         <label>Fault description</label>
         <textarea class="ax-input" name="description" placeholder="Describe what happened…"></textarea>
       </div>
       {{ ui.alert("💡 Live checks: date contradictions (claim before purchase, fault after claim, repair before purchase) and serial mismatches are detected automatically.", "info") }}
-      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit">🚀 Evaluate & Submit Claim</button>
+      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit" onclick="showEvalOverlay()">🚀 Evaluate &amp; Submit Claim</button>
     </form>
   </div>
 {% endif %}

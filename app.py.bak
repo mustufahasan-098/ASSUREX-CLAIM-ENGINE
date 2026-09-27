@@ -80,8 +80,7 @@ NAV = {
                  ("dashboard", "Dashboard", "🏠")],
     "admin": [("admin", "Admin Analytics", "📊"),
               ("admin_approvals", "Account Approvals", "🛡️"),
-                            ("entity_links", "Entity Links", "🔗"),
-("admin_templates", "Product Catalog", "🗃️"),
+              ("admin_templates", "Product Catalog", "🗃️"),
               ("review_queue", "Review Queue", "⚖️"),
               ("claims", "All Claims", "🗂️")],
 }
@@ -1306,130 +1305,6 @@ def admin_approval_action(email):
         fdb.log_audit("user_rejected", g.user["email"], {"user": email})
         flash(f"⛔ Rejected {email}.", "warning")
     return redirect(url_for("admin_approvals"))
-
-
-# ------------------------------------------------ entity links
-@app.route("/admin/links")
-@login_required(roles=["admin", "reviewer"])
-def entity_links():
-    from src import entity_links as el
-    claims = fdb.all_docs("claims", limit=1000)
-    links = el.build_links(claims)
-    try:
-        min_c = int(models_mod.load_all()["settings"]
-                    .get("syndicate_min_cluster", 3))
-    except Exception:
-        min_c = 3
-    clusters = el.build_clusters(claims, min_cluster=min_c,
-                                  min_link_types=2)
-    cluster_ids = {cid for cl in clusters
-                   for cid in cl["members"]}
-       # ---- graph data: nodes + edges for the force graph
-    nodes, edges, seen = [], [], set()
-    for c in claims:
-        cid = c.get("claim_id")
-        if not cid:
-            continue
-        cluster_ids = {x for cl in clusters for x in cl["members"]}
-        tone = ("invalid" if cid in cluster_ids else
-                "valid" if c.get("status") == "Approved" else "review")
-        nodes.append({"id": cid, "label": cid, "type": "claim",
-                      "tone": tone,
-                      "owner": c.get("owner_email", ""),
-                      "status": c.get("status", "")})
-        seen.add(cid)
-    ent_id = 0
-    for ent, ids in links.items():
-        ent_id += 1
-        eid = f"e{ent_id}"
-        nodes.append({"id": eid,
-                      "label": f"{ent[0]}: {ent[1][:16]}",
-                      "type": "entity", "tone": "info"})
-        for cid in ids:
-            edges.append({"source": eid, "target": cid})
-
-    import json as _json
-        # ---- graph data: nodes + edges for the force graph
-    nodes, edges, seen = [], [], set()
-    for c in claims:
-        cid = c.get("claim_id")
-        if not cid:
-            continue
-        cluster_ids = {x for cl in clusters for x in cl["members"]}
-        tone = ("invalid" if cid in cluster_ids else
-                "valid" if c.get("status") == "Approved" else "review")
-        nodes.append({"id": cid, "label": cid, "type": "claim",
-                      "tone": tone,
-                      "owner": c.get("owner_email", ""),
-                      "status": c.get("status", "")})
-        seen.add(cid)
-    ent_id = 0
-    for ent, ids in links.items():
-        ent_id += 1
-        eid = f"e{ent_id}"
-        nodes.append({"id": eid,
-                      "label": f"{ent[0]}: {ent[1][:16]}",
-                      "type": "entity", "tone": "info"})
-        for cid in ids:
-            edges.append({"source": eid, "target": cid})
-
-    import json as _json
-        # ---- graph data: nodes + edges for the force graph
-    nodes, edges, seen = [], [], set()
-    for c in claims:
-        cid = c.get("claim_id")
-        if not cid:
-            continue
-        cluster_ids = {x for cl in clusters for x in cl["members"]}
-        tone = ("invalid" if cid in cluster_ids else
-                "valid" if c.get("status") == "Approved" else "review")
-        nodes.append({"id": cid, "label": cid, "type": "claim",
-                      "tone": tone,
-                      "owner": c.get("owner_email", ""),
-                      "status": c.get("status", "")})
-        seen.add(cid)
-    ent_id = 0
-    for ent, ids in links.items():
-        ent_id += 1
-        eid = f"e{ent_id}"
-        nodes.append({"id": eid,
-                      "label": f"{ent[0]}: {ent[1][:16]}",
-                      "type": "entity", "tone": "info"})
-        for cid in ids:
-            edges.append({"source": eid, "target": cid})
-
-    import json as _json
-        # ---- graph data: nodes + edges for the force graph
-    nodes, edges, seen = [], [], set()
-    for c in claims:
-        cid = c.get("claim_id")
-        if not cid:
-            continue
-        cluster_ids = {x for cl in clusters for x in cl["members"]}
-        tone = ("invalid" if cid in cluster_ids else
-                "valid" if c.get("status") == "Approved" else "review")
-        nodes.append({"id": cid, "label": cid, "type": "claim",
-                      "tone": tone,
-                      "owner": c.get("owner_email", ""),
-                      "status": c.get("status", "")})
-        seen.add(cid)
-    ent_id = 0
-    for ent, ids in links.items():
-        ent_id += 1
-        eid = f"e{ent_id}"
-        nodes.append({"id": eid,
-                      "label": f"{ent[0]}: {ent[1][:16]}",
-                      "type": "entity", "tone": "info"})
-        for cid in ids:
-            edges.append({"source": eid, "target": cid})
-
-    import json as _json
-    return render_template("entity_links.html",
-                           total_claims=len(claims), links=links,
-                           clusters=clusters,
-                           cluster_claims=len(cluster_ids),
-                           graph_json=_json.dumps({"nodes": nodes,
-                                                   "edges": edges}))
 
 
 if __name__ == "__main__":

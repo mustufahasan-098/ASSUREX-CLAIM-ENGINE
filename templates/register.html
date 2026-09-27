@@ -1,34 +1,125 @@
 {% extends "base.html" %}
-{% block title %}Register — AssureX Claim Engine{% endblock %}
+{% block title %}Create Account — AssureX{% endblock %}
 {% block auth %}
-<div class="ax-auth-wrap" style="max-width: 520px;">
-  <div class="ax-form-card">
-    <h4 style="margin-bottom:16px;">🆕 Create an account</h4>
-    <form method="post">
-      <div class="ax-field">
-        <label>Full name</label>
-        <input class="ax-input" type="text" name="name" required>
+<div class="ax-login-bg">
+  <div class="orb"></div><div class="orb"></div><div class="orb"></div>
+</div>
+
+<div class="ax-reg-wrap">
+  <div style="text-align:center; margin-bottom: 22px;" class="ax-reveal ax-reveal-1">
+    <div class="ax-shield-stage" style="display:inline-block;">
+      <div class="ax-shield3d" style="width:64px; height:64px;">
+        <div class="ax-shield-glow"></div>
+        <svg viewBox="0 0 24 24" width="64" height="64" fill="none"
+             style="filter: drop-shadow(0 6px 18px rgba(109,139,255,.45));">
+          <defs>
+            <linearGradient id="shg2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#8CA4FF"/><stop offset="1" stop-color="#3E6FD8"/>
+            </linearGradient>
+          </defs>
+          <path d="M12 2L4 5.5v5.64c0 5.05 3.41 9.77 8 10.86 4.59-1.09 8-5.81 8-10.86V5.5L12 2z"
+                fill="url(#shg2)" opacity=".15"/>
+          <path d="M12 2L4 5.5v5.64c0 5.05 3.41 9.77 8 10.86 4.59-1.09 8-5.81 8-10.86V5.5L12 2z"
+                stroke="url(#shg2)" stroke-width="1.5"/>
+          <path d="M12 8v6M12 16.5v.01" stroke="#8CA4FF" stroke-width="1.8"
+                stroke-linecap="round"/>
+        </svg>
       </div>
-      <div class="ax-field">
-        <label>Email</label>
-        <input class="ax-input" type="email" name="email" required>
-      </div>
-      <div class="ax-field">
-        <label>Password (min 6 characters)</label>
-        <input class="ax-input" type="password" name="password" minlength="6" required>
-      </div>
-      <div class="ax-field">
-        <label>Register as</label>
-        <select class="ax-input" name="role">
-          <option value="customer">🧑 Customer</option>
-          <option value="service_center">🔧 Service center</option>
-          <option value="reviewer">🧑‍⚖️ Claim reviewer</option>
-        </select>
-      </div>
-      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit">Create account</button>
-    </form>
-    <p style="margin-top:16px; font-size:.9rem;">Already registered?
-      <a href="{{ url_for('login') }}">Log in</a></p>
+    </div>
+    <h1 style="font-size:1.5rem; font-weight:800; letter-spacing:-.02em; margin-top:10px;">
+      Join AssureX</h1>
+    <p style="font-size:.9rem; color:var(--t-mid);">Create your account in under a minute</p>
   </div>
+
+  <div class="ax-login-card ax-reveal ax-reveal-2">
+    <form method="post">
+      <div style="margin-bottom:16px;">
+        <label class="ax-label-lg">Full name</label>
+        <div class="ax-input-wrap">
+          <span class="ax-input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          </span>
+          <input class="ax-input-lg" type="text" name="name" required
+                 placeholder="Your name" autofocus>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="ax-label-lg">Email</label>
+        <div class="ax-input-wrap">
+          <span class="ax-input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+          </span>
+          <input class="ax-input-lg" type="email" name="email" required
+                 placeholder="you@example.com">
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label class="ax-label-lg">Password</label>
+        <div class="ax-input-wrap">
+          <span class="ax-input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input class="ax-input-lg" type="password" name="password"
+                 minlength="6" required placeholder="Minimum 6 characters">
+        </div>
+        <div class="ax-pw-hint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Minimum 6 characters — hashed with PBKDF2 + unique salt
+        </div>
+      </div>
+
+      <label class="ax-label-lg">I am registering as</label>
+      <div class="ax-role-grid" style="margin-bottom:22px;">
+        <label class="ax-role-tile">
+          <input type="radio" name="role" value="customer" checked>
+          <div class="ax-role-icon2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          </div>
+          <div class="ax-role-name">Customer</div>
+          <div class="ax-role-desc">Products &amp; claims</div>
+        </label>
+        <label class="ax-role-tile">
+          <input type="radio" name="role" value="service_center">
+          <div class="ax-role-icon2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <div class="ax-role-name">Service Center</div>
+          <div class="ax-role-desc">On-behalf registration</div>
+        </label>
+        <label class="ax-role-tile">
+          <input type="radio" name="role" value="reviewer">
+          <div class="ax-role-icon2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M5 7l7-4 7 4"/><path d="M3 21h18"/></svg>
+          </div>
+          <div class="ax-role-name">Reviewer</div>
+          <div class="ax-role-desc">Evaluate claims</div>
+        </label>
+      </div>
+      <p style="font-size:.74rem; color:var(--t-low); margin: -8px 0 18px;
+                display:flex; align-items:center; gap:7px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16v.01"/></svg>
+        Reviewer and Service Center accounts are activated by an administrator
+        after registration — you'll be notified when approved.
+      </p>
+      <button class="ax-btn-login" type="submit">
+        <span class="ax-icon-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
+          Create account
+        </span>
+      </button>
+    </form>
+
+    <div class="ax-form-foot">
+      Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+    </div>
+  </div>
+
+  <p style="text-align:center; font-size:.74rem; color:var(--t-low); margin-top:16px;"
+     class="ax-reveal ax-reveal-3">
+    <span class="ax-trust" style="justify-content:center;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Passwords hashed with PBKDF2 + unique salt · every account action audit-logged
+    </span>
+  </p>
 </div>
 {% endblock %}

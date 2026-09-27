@@ -21,7 +21,6 @@ from .fusion import build_summary, compare_models, decide
 from .preprocessing import build_feature_frame
 from .rules import evaluate_claim
 from . import fraud_intel
-
 ROOT = Path(__file__).resolve().parent.parent
 UPLOADS = ROOT / "uploads"
 DOC_TYPES = ["receipt", "warranty_card", "product_image",
@@ -90,7 +89,7 @@ def process_and_save(claim, docs, actor):
     m = models_mod.load_all()
     claim["claim_id"] = fdb.next_claim_id()
 
-    # ---- duplicate detection + 7-layer fraud intelligence
+        # ---- duplicate detection + 7-layer fraud intelligence
     incoming = claim.pop("_dup", {}) or {}
     dup = detect_duplicates(claim, docs)
     # preserve receipt-mismatch flags computed at upload time (app.py)
@@ -108,25 +107,12 @@ def process_and_save(claim, docs, actor):
                                 claim.get("ocr_verification"))
     dup["fraud_score"] = fraud["score"]
     dup["fraud_escalated"] = fraud["escalated"]
-
-    # ---- syndicate cluster check: membership in a multi-user
-    # shared-entity cluster escalates regardless of model predictions
-    from src import entity_links as el
-    try:
-        _all = fdb.all_docs("claims", limit=1000)
-        _cluster = el.syndicate_flag(claim, el.build_clusters(_all))
-    except Exception:
-        _cluster = None
-    if _cluster:
-        dup["fraud_score"] = max(int(dup.get("fraud_score", 0) or 0), 85)
-        dup["syndicate_cluster"] = _cluster["members"]
-
     claim["prior_claim_count"] = dup["prior_claims"]
     claim["duplicate_invoice"] = dup["invoice_reused"]
     claim["_dup"] = dup
 
     res = process_claim(claim)
-    # derived-feature snapshot (SRS Step 3 - displayed on the result page)
+        # derived-feature snapshot (SRS Step 3 - displayed on the result page)
     from .features import compute_derived
     derived = compute_derived(claim, res["policy"])
     derived = {k: (v if not isinstance(v, list) else ", ".join(map(str, v)))

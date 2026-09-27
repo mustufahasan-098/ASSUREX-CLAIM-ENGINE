@@ -40,7 +40,10 @@ def register(name, email, password, role):
         return None, "Please enter a valid email address."
     if fdb.get_doc("users", email):
         return None, "An account with this email already exists."
+        # privileged roles require admin approval before activation
+    needs_approval = role in ("reviewer", "service_center")
     user = {"name": name.strip(), "email": email, "role": role,
+            "status": "pending" if needs_approval else "active",
             "password": hash_password(password), "failed_attempts": 0,
             "created_at": datetime.now().isoformat(timespec="seconds")}
     fdb.set_doc("users", email, user)
@@ -55,6 +58,9 @@ def login(email, password):
         return None, "No account with this email."
     if doc.get("failed_attempts", 0) >= 5:
         return None, "Account locked after 5 failed attempts. Contact admin."
+    if doc.get("status") == "pending":
+        return None, ("Your account is awaiting administrator approval. "
+                      "You will be notified once activated.")
     if not verify_password(password, doc["password"]):
         fdb.set_doc("users", email,
                     {"failed_attempts": doc.get("failed_attempts", 0) + 1},

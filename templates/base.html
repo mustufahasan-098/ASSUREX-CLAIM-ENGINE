@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}AssureX Claim Engine{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='assurex.css') }}">
+  {% if csrf_token %}
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  {% endif %}
 </head>
 <body>
   {% if current_user %}
@@ -47,9 +50,33 @@
     </div>
     {% block auth %}{% endblock %}
   {% endif %}
+
+  <div class="ax-eval-overlay" id="evalOverlay">
+    <div class="ax-eval-box">
+      <div class="ax-eval-shield">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L4 5.5v5.64c0 5.05 3.41 9.77 8 10.86 4.59-1.09 8-5.81 8-10.86V5.5L12 2z"
+                stroke="#8CA4FF" stroke-width="1.6" fill="rgba(109,139,255,.15)"/>
+          <path d="M8.5 12l2.4 2.4 4.6-4.8" stroke="#8CA4FF" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="ax-eval-title">Evaluating your claim</div>
+      <div class="ax-eval-steps" id="evalSteps">
+        <div class="ax-eval-step" data-step="0"><span class="ax-eval-icon">1</span>Verifying documents &amp; extracting data</div>
+        <div class="ax-eval-step" data-step="1"><span class="ax-eval-icon">2</span>Running warranty rule engine</div>
+        <div class="ax-eval-step" data-step="2"><span class="ax-eval-icon">3</span>Python model analyzing claim</div>
+        <div class="ax-eval-step" data-step="3"><span class="ax-eval-icon">4</span>Generating Claim Summary Card</div>
+        <div class="ax-eval-step" data-step="4"><span class="ax-eval-icon">5</span>Teachable Machine classification</div>
+        <div class="ax-eval-step" data-step="5"><span class="ax-eval-icon">6</span>Comparing models &amp; fraud analysis</div>
+        <div class="ax-eval-step" data-step="6"><span class="ax-eval-icon">7</span>Finalizing decision</div>
+      </div>
+      <div class="ax-eval-bar"><div class="ax-eval-bar-fill" id="evalBar"></div></div>
+      <div class="ax-eval-note">Dual-model evaluation — usually under one second</div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='csrf.js') }}"></script>
+  <script src="{{ url_for('static', filename='eval_overlay.js') }}"></script>
 </body>
-{% if csrf_token %}
-<meta name="csrf-token" content="{{ csrf_token() }}">
-{% endif %}
-<script src="{{ url_for('static', filename='csrf.js') }}"></script>
 </html>

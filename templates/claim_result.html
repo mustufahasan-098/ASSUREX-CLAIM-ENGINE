@@ -1,157 +1,347 @@
 {% extends "base.html" %}
 {% import "macros.html" as ui %}
 {% block title %}{{ c.claim_id }} — AssureX{% endblock %}
+
+{% set is_staff = g.user.role in ('reviewer', 'admin') %}
+{% set d_tone = {'Likely Valid': 'valid', 'Likely Invalid': 'invalid',
+                 'Manual Review Required': 'review'}.get(c.final_decision, 'review') %}
+{% set d_icon = {'Likely Valid': '✅', 'Likely Invalid': '⛔',
+                 'Manual Review Required': '👤'}.get(c.final_decision, '👤') %}
+
 {% block content %}
-{{ ui.decision_banner(c.final_decision, "Claim " ~ c.claim_id ~ " · status " ~ c.status ~ " · " ~ c.consistency ~ " · confidence difference " ~ "%.3f"|format(c.conf_diff|float)) }}
 
-{% if c.ai_recommendation and c.ai_recommendation != c.final_decision %}
-  {{ ui.alert("AI recommended: " ~ c.ai_recommendation ~ " — overridden by reviewer " ~ (c.reviewer or "") ~ ". The original model outputs are preserved in the audit trail.", "review") }}
-{% endif %}
+{% if is_staff %}
+  {# ══════════════ STAFF VIEW ══════════════ #}
 
-{{ ui.stat_row([
-  {"label": "Python model", "value": py_short, "icon": "🐍", "tone": py_tone},
-  {"label": "Teachable Machine", "value": tm_short, "icon": "🖼️", "tone": tm_tone},
-  {"label": "Models match", "value": "Yes" if c.python_pred == c.tm_pred else "No", "icon": "🤝", "tone": "valid" if c.python_pred == c.tm_pred else "invalid"},
-  {"label": "Fraud risk", "value": risk_score ~ "/100", "icon": "🕵️", "tone": risk_tone}
-]) }}
-
-<div class="ax-grid-2">
-  <div class="ax-card"><h4>🐍 Python classification model</h4>
-    {{ ui.prob_bars(c.python_probs) }}</div>
-  <div class="ax-card"><h4>🖼️ Teachable Machine model</h4>
-    {{ ui.prob_bars(c.tm_probs) }}</div>
-</div>
-
-{{ ui.section("🧠", "Decision explanation") }}
-<div class="ax-grid-2">
-  <div class="ax-card"><h4>✅ Factors supporting</h4>
-    <ul style="padding-left:18px; color:var(--t-mid); font-size:.9rem;">
-      {% for f in c.explanation.support %}<li>{{ f }}</li>{% endfor %}
-      {% for w in c.explanation.warnings %}<li>ℹ️ {{ w }}</li>{% endfor %}
-      {% if not c.explanation.support and not c.explanation.warnings %}<li>None</li>{% endif %}
-    </ul></div>
-  <div class="ax-card"><h4>⚠️ Factors against / attention</h4>
-    <ul style="padding-left:18px; color:var(--t-mid); font-size:.9rem;">
-      {% for f in c.explanation.oppose %}<li>{{ f }}</li>{% endfor %}
-      {% if not c.explanation.oppose %}<li>None</li>{% endif %}
-    </ul></div>
-</div>
-
-{% if risk_reasons %}
-  {{ ui.alert("🕵️ Fraud risk " ~ risk_score ~ "/100 — " ~ risk_reasons|join(" · "), risk_tone) }}
-{% endif %}
-
-{% if c.fraud and c.fraud.signals %}
-<details class="ax-details">
-  <summary>🕵️ Fraud-risk breakdown — {{ c.fraud.score }}/100 · {{ c.fraud.families }} independent indicators{% if c.fraud.escalated %} · <b>escalated</b>{% endif %}</summary>
-  <div class="ax-details-body" style="overflow-x:auto;">
-    <table class="ax-table">
-      <thead><tr><th>Signal</th><th>Points</th><th>Evidence</th></tr></thead>
-      <tbody>
-      {% for s in c.fraud.signals %}
-        <tr><td class="ax-table-strong">{{ s.code.replace('_',' ')|title }}</td>
-            <td>+{{ s.points }}</td><td>{{ s.reason }}</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+  <div class="ax-decision-hero ax-decision-hero--{{ d_tone }}">
+    <div class="ax-dh-icon">{{ d_icon }}</div>
+    <div>
+      <div class="ax-dh-title">{{ c.final_decision }}</div>
+      <div class="ax-dh-sub">Claim {{ c.claim_id }} · {{ c.brand }} {{ c.model }} · {{ c.fault_category.replace('_',' ') }}</div>
+    </div>
+    <div class="ax-dh-meta">
+      <span class="ax-dh-chip">{{ c.status }}</span>
+      <span class="ax-dh-chip">{{ c.consistency }}</span>
+      <span class="ax-dh-chip">Δ {{ "%.3f"|format(c.conf_diff|float) }}</span>
+    </div>
   </div>
-</details>
-{% endif %}
 
-{{ ui.section("⚖️", "Rules, documents & comparison") }}
-{% set r = c.rules_outcome %}
-{% if r.contradictions %}{{ ui.alert("Contradictions: " ~ r.contradictions|join(" · "), "invalid") }}{% endif %}
-{% if r.hard_fails %}{{ ui.alert("Hard-fail rules: " ~ r.hard_fails|join(" · "), "invalid") }}{% endif %}
-{% if r.review_flags %}{{ ui.alert("Review flags: " ~ r.review_flags|join(" · "), "review") }}{% endif %}
-{% if r.warnings %}{{ ui.alert("Warnings: " ~ r.warnings|join(" · "), "info") }}{% endif %}
-{% if not r.contradictions and not r.hard_fails and not r.review_flags %}{{ ui.alert("All warranty rules passed.", "valid") }}{% endif %}
+  {% if c.ai_recommendation and c.ai_recommendation != c.final_decision %}
+    {{ ui.alert("AI recommended: " ~ c.ai_recommendation ~ " — overridden by reviewer " ~ (c.reviewer or "") ~ ". Original model outputs preserved in audit trail.", "review") }}
+  {% endif %}
 
-{{ ui.kv_grid([
-  ("Rule-engine label", r.label),
-  ("Confidence difference", "%.3f"|format(c.conf_diff|float)),
-  ("Consistency", c.consistency),
-  ("Model versions", c.model_versions.python ~ " · " ~ c.model_versions.tm),
-  ("Duplicate indicators", c.duplicates.prior_claims ~ " prior · invoice reused: " ~ ("yes" if c.duplicates.invoice_reused else "no") ~ " · doc reuse: " ~ ("yes" if c.duplicates.doc_hash_reuse else "no"))
-]) }}
+  <div class="ax-verdict-row">
+    <div class="ax-verdict">
+      <div class="ax-v-label">🐍 Python model</div>
+      <div class="ax-v-value">{{ py_short }}</div>
+      <div class="ax-v-sub">{{ "%.0f"|format(c.py_top_conf|float*100) }}% confidence</div>
+    </div>
+    <div class="ax-verdict">
+      <div class="ax-v-label">🖼️ Teachable Machine</div>
+      <div class="ax-v-value">{{ tm_short }}</div>
+      <div class="ax-v-sub">{{ "%.0f"|format(c.tm_top_conf|float*100) }}% confidence</div>
+    </div>
+    <div class="ax-verdict">
+      <div class="ax-v-label">🤝 Models agree</div>
+      <div class="ax-v-value">{{ "Yes" if c.python_pred == c.tm_pred else "No" }}</div>
+      <div class="ax-v-sub">{{ c.consistency }}</div>
+    </div>
+    <div class="ax-verdict">
+      <div class="ax-v-label">🕵️ Fraud risk</div>
+      <div class="ax-v-value">{{ risk_score }}/100</div>
+      <div class="ax-v-sub">{{ "Low" if risk_score < 30 else ("Elevated" if risk_score < 60 else "High") }}</div>
+    </div>
+  </div>
 
-{% if c.documents %}
-<div class="ax-card">
-  <h4>📎 Documents on this claim ({{ c.documents|length }})</h4>
-  {% for d in c.documents %}
-  <div class="ax-doc-item">
-    <span>📎 <b>{{ d.type.replace('_',' ')|title }}</b> — {{ d.filename }} ·
-      <code>{{ d.sha256[:14] }}…</code> · {{ "%.0f"|format(d.size / 1024) }} KB</span>
-    <span style="display:flex; gap:6px;">
-      <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_doc_download', cid=c.claim_id, index=loop.index0) }}">⬇️ Download</a>
-      {% if (g.user.role == 'admin' or c.owner_email == g.user.email) and c.status not in ('Approved', 'Rejected', 'Closed') %}
-      <form method="post" action="{{ url_for('claim_doc_remove', cid=c.claim_id, index=loop.index0) }}" style="display:inline;">
-        <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit" title="Remove document">🗑️</button>
-      </form>
+  <div class="ax-grid-2">
+    <div class="ax-model-card ax-model-card--py">
+      <div class="ax-model-head"><h4>🐍 Python classification model</h4>
+        <span class="ax-model-badge">{{ c.model_versions.python if c.model_versions and c.model_versions.python else '—' }}</span></div>
+      {% if c.py_probs %}{{ ui.prob_bars(c.py_probs) }}
+      {% else %}
+        {{ ui.kv_grid([("Top prediction", c.python_pred or "—"),
+                       ("Confidence", "%.0f"|format(c.py_top_conf|float*100) ~ "%")]) }}
+        <div class="ax-bar-row">
+          <div class="ax-bar-label ax-bar-top">{{ c.python_pred or "Prediction" }} ⭐</div>
+          <div class="ax-bar-track"><div class="ax-bar-fill ax-bar-fill--{{ py_tone }}" style="width: {{ (c.py_top_conf|float*100)|round(1) }}%"></div></div>
+          <div class="ax-bar-pct">{{ "%.0f"|format(c.py_top_conf|float*100) }}%</div>
+        </div>
+        <div class="ax-legacy-note">📦 Legacy record — created before per-class probability logging. All claims since record full three-class breakdowns.</div>
       {% endif %}
-    </span>
+    </div>
+    <div class="ax-model-card ax-model-card--tm">
+      <div class="ax-model-head"><h4>🖼️ Teachable Machine model</h4>
+        <span class="ax-model-badge">{{ c.model_versions.tm if c.model_versions and c.model_versions.tm else '—' }}</span></div>
+      {% if c.tm_probs %}{{ ui.prob_bars(c.tm_probs) }}
+      {% else %}
+        {{ ui.kv_grid([("Top prediction", c.tm_pred or "—"),
+                       ("Confidence", "%.0f"|format(c.tm_top_conf|float*100) ~ "%")]) }}
+        <div class="ax-bar-row">
+          <div class="ax-bar-label ax-bar-top">{{ c.tm_pred or "Prediction" }} ⭐</div>
+          <div class="ax-bar-track"><div class="ax-bar-fill ax-bar-fill--{{ tm_tone }}" style="width: {{ (c.tm_top_conf|float*100)|round(1) }}%"></div></div>
+          <div class="ax-bar-pct">{{ "%.0f"|format(c.tm_top_conf|float*100) }}%</div>
+        </div>
+        <div class="ax-legacy-note">📦 Legacy record — per-class probabilities not logged at creation time.</div>
+      {% endif %}
+    </div>
   </div>
-  {% endfor %}
-</div>
-{% endif %}
 
-{% if c.derived_features %}
-{{ ui.section("🔧", "Data pre-processing (derived features)") }}
-<div class="ax-card">
-  <p style="font-size:.85rem; margin-bottom:10px;">Raw claim data is cleaned and transformed before classification: date normalization, categorical encoding, numerical scaling, and derived features (SRS Step 3):</p>
-  {{ ui.kv_grid([
-    ("Product age at fault", c.derived_features.product_age_days ~ " days" if c.derived_features.product_age_days is not none else "N/A"),
-    ("Warranty days remaining", c.derived_features.warranty_days_remaining if c.derived_features.warranty_days_remaining is not none else "N/A"),
-    ("Days from fault to claim", c.derived_features.days_to_report if c.derived_features.days_to_report is not none else "N/A"),
-    ("Missing documents", c.derived_features.missing_docs_count),
-    ("Warranty expired at fault", "Yes" if c.derived_features.warranty_expired else "No"),
-    ("Within grace period", "Yes" if c.derived_features.within_grace else "No")
-  ]) }}
-</div>
-{% endif %}
-
-{{ ui.section("🪪", "Claim Summary Card") }}
-<div class="ax-grid-2">
-  <div><img src="{{ url_for('claim_card', cid=c.claim_id) }}" alt="Claim Summary Card"
-       style="width:100%; max-width:430px; border-radius:14px; border:1px solid var(--stroke); box-shadow:var(--sh-2);"></div>
-  <div class="ax-card" style="align-self:start;">
-    <h4>🪪 About this card</h4>
-    <p style="font-size:.88rem;">Generated automatically from the submitted claim data (SRS Step 7). Contains factual claim information only — <b>no predictions or confidence scores</b> (SRS req xx), so both models evaluate independently. This exact image was classified by the Teachable Machine model.</p>
+  {{ ui.section("🧠", "Why this decision") }}
+  <div class="ax-grid-2">
+    <div class="ax-why-card">
+      <div class="ax-why-head"><h4>✅ Factors supporting</h4></div>
+      <ul class="ax-why-list ax-why-list--pro">
+        {% for f in c.explanation.support %}<li>{{ f }}</li>{% endfor %}
+        {% for w in c.explanation.warnings %}<li>{{ w }}</li>{% endfor %}
+        {% if not c.explanation.support and not c.explanation.warnings %}<li>None</li>{% endif %}
+      </ul>
+    </div>
+    <div class="ax-why-card">
+      <div class="ax-why-head"><h4>⚠️ Factors against / attention</h4></div>
+      <ul class="ax-why-list ax-why-list--con">
+        {% for f in c.explanation.oppose %}<li>{{ f }}</li>{% endfor %}
+        {% if not c.explanation.oppose %}<li>None</li>{% endif %}
+      </ul>
+    </div>
   </div>
-</div>
 
-{{ ui.section("📋", "AI-generated summary") }}
-<div class="ax-card"><p style="font-size:.93rem;">{{ c.summary }}</p></div>
+  {% if counterfactuals %}
+  {{ ui.section("↩️", "What would have changed this decision") }}
+  <div class="ax-card">
+    <p style="font-size:.8rem; color:var(--t-low); margin-bottom:10px;">
+      Engine-verified counterfactuals — each flip below was re-evaluated through
+      the same rule engine that made this decision.</p>
+    <ul class="ax-why-list ax-why-list--info">
+      {% for f in counterfactuals %}<li>{{ f }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
 
-{{ ui.section("🕓", "Timeline") }}
-<div class="ax-card">{{ ui.timeline(c.timeline) }}</div>
+  {% if c.fraud and c.fraud.signals %}
+  <details class="ax-details">
+    <summary>🕵️ Fraud-risk breakdown — {{ c.fraud.score }}/100 · {{ c.fraud.families }} independent indicators{% if c.fraud.escalated %} · <b>escalated</b>{% endif %}</summary>
+    <div class="ax-details-body" style="overflow-x:auto;">
+      <table class="ax-table">
+        <thead><tr><th>Signal</th><th>Points</th><th>Evidence</th></tr></thead>
+        <tbody>
+        {% for s in c.fraud.signals %}
+          <tr><td class="ax-table-strong">{{ s.code.replace('_',' ')|title }}</td>
+              <td>+{{ s.points }}</td><td>{{ s.reason }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% endif %}
 
-{% if c.dispatch %}
-{{ ui.section("🔧", "Repair management") }}
-<div class="ax-card">
+  {{ ui.section("⚖️", "Rules & validation") }}
+  {% set r = c.rules_outcome %}
+  {% if r.contradictions %}{{ ui.alert("Contradictions: " ~ r.contradictions|join(" · "), "invalid") }}{% endif %}
+  {% if r.hard_fails %}{{ ui.alert("Hard-fail rules: " ~ r.hard_fails|join(" · "), "invalid") }}{% endif %}
+  {% if r.review_flags %}{{ ui.alert("Review flags: " ~ r.review_flags|join(" · "), "review") }}{% endif %}
+  {% if r.warnings %}{{ ui.alert("Warnings: " ~ r.warnings|join(" · "), "info") }}{% endif %}
+  {% if not r.contradictions and not r.hard_fails and not r.review_flags %}{{ ui.alert("All warranty rules passed.", "valid") }}{% endif %}
+
   {{ ui.kv_grid([
-    ("Service center", c.dispatch.center_name),
-    ("Status", c.dispatch.status),
-    ("SLA deadline", c.dispatch.deadline),
-    ("Contact", c.dispatch.center_phone),
-    ("Assigned by", c.dispatch.assigned_by ~ " on " ~ c.dispatch.assigned_at)
+    ("Rule-engine label", r.label),
+    ("Confidence difference", "%.3f"|format(c.conf_diff|float)),
+    ("Consistency", c.consistency),
+    ("Duplicate indicators", c.duplicates.prior_claims ~ " prior · invoice reused: " ~ ("yes" if c.duplicates.invoice_reused else "no") ~ " · doc reuse: " ~ ("yes" if c.duplicates.doc_hash_reuse else "no"))
   ]) }}
-  {{ ui.alert("Repair scheduled through the certified network — the customer is notified automatically with the SLA deadline and center contact.", "info") }}
-</div>
-{% endif %}
 
-<div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
-  <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Download full report</a>
-  {% if g.user.role in ('reviewer', 'admin') and c.status in ('Approved', 'Rejected') %}
-  <form method="post" action="{{ url_for('claim_close', cid=c.claim_id) }}" style="display:inline;">
-    <button class="ax-btn" type="submit">🔒 Close claim</button>
-  </form>
+  {% if c.documents %}
+  <div class="ax-card">
+    <h4>📎 Documents ({{ c.documents|length }})</h4>
+    {% for d in c.documents %}
+    <div class="ax-doc-item">
+      <span>📎 <b>{{ d.type.replace('_',' ')|title }}</b> — {{ d.filename }} ·
+        <code>{{ d.sha256[:14] }}…</code> · {{ "%.0f"|format(d.size / 1024) }} KB</span>
+      <span style="display:flex; gap:6px;">
+        <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_doc_download', cid=c.claim_id, index=loop.index0) }}">⬇️</a>
+        {% if (g.user.role == 'admin' or c.owner_email == g.user.email) and c.status not in ('Approved', 'Rejected', 'Closed') %}
+        <form method="post" action="{{ url_for('claim_doc_remove', cid=c.claim_id, index=loop.index0) }}" style="display:inline;">
+          <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit">🗑️</button>
+        </form>
+        {% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
   {% endif %}
-  {% if c.final_decision == 'Likely Valid' and c.status in ('Approved', 'Closed') and not c.dispatch %}
-  <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_dispatch', cid=c.claim_id) }}">🔧 Schedule Repair</a>
+
+  {% if c.derived_features %}
+  {{ ui.section("🔧", "Pre-processing (derived features)") }}
+  <div class="ax-card">
+    {{ ui.kv_grid([
+      ("Product age at fault", c.derived_features.product_age_days ~ " days" if c.derived_features.product_age_days is not none else "N/A"),
+      ("Warranty days remaining", c.derived_features.warranty_days_remaining if c.derived_features.warranty_days_remaining is not none else "N/A"),
+      ("Days fault→claim", c.derived_features.days_to_report if c.derived_features.days_to_report is not none else "N/A"),
+      ("Missing documents", c.derived_features.missing_docs_count),
+      ("Warranty expired at fault", "Yes" if c.derived_features.warranty_expired else "No"),
+      ("Within grace period", "Yes" if c.derived_features.within_grace else "No")
+    ]) }}
+  </div>
   {% endif %}
-  <a class="ax-btn" href="{{ url_for('new_claim') }}">➕ New claim</a>
-  {% if g.user.role in ('customer','service_center') %}
-  <a class="ax-btn" href="{{ url_for('claims') }}">📁 My claims</a>
+
+  {{ ui.section("🪪", "Claim Summary Card") }}
+  <div class="ax-grid-2">
+    <div><img src="{{ url_for('claim_card', cid=c.claim_id) }}" alt="Claim Summary Card"
+         style="width:100%; max-width:430px; border-radius:14px; border:1px solid var(--stroke); box-shadow:var(--sh-2);"></div>
+    <div class="ax-card" style="align-self:start;">
+      <h4>🪪 Independence by design</h4>
+      <p style="font-size:.88rem;">Generated from claim facts only — <b>no predictions or confidence scores on the card</b> (SRS req xx). Both models evaluate independently; this exact image was classified by the Teachable Machine model.</p>
+    </div>
+  </div>
+
+  {{ ui.section("📋", "AI-generated summary") }}
+  <div class="ax-card"><div class="ax-quote"><p>{{ summary_html|safe if summary_html is defined else c.summary }}</p></div></div>
+
+  {{ ui.section("🕓", "Timeline") }}
+  <div class="ax-card">{{ ui.timeline(c.timeline) }}</div>
+
+  {% if c.dispatch %}
+  {{ ui.section("🔧", "Repair management") }}
+  <div class="ax-card">
+    {{ ui.kv_grid([
+      ("Service center", c.dispatch.center_name),
+      ("Status", c.dispatch.status),
+      ("SLA deadline", c.dispatch.deadline),
+      ("Contact", c.dispatch.center_phone),
+      ("Assigned by", c.dispatch.assigned_by ~ " on " ~ c.dispatch.assigned_at)
+    ]) }}
+  </div>
   {% endif %}
-</div>
+
+  <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Full report</a>
+    <form method="post" action="{{ url_for('claim_close', cid=c.claim_id) }}" style="display:inline;">
+      <button class="ax-btn" type="submit">🔒 Close claim</button>
+    </form>
+    <a class="ax-btn" href="{{ url_for('claims') }}">🗂️ All claims</a>
+  </div>
+
+{% else %}
+  {# ══════════════ CUSTOMER VIEW ══════════════ #}
+
+  <div class="ax-decision-hero ax-decision-hero--{{ d_tone }}">
+    <div class="ax-dh-icon">{{ d_icon }}</div>
+    <div>
+      <div class="ax-dh-title">
+        {% if c.status == 'Approved' %}Your claim is approved 🎉
+        {% elif c.status == 'Rejected' %}Claim decision ready
+        {% elif c.status == 'Closed' %}Claim completed
+        {% else %}We're on it{% endif %}
+      </div>
+      <div class="ax-dh-sub">Claim {{ c.claim_id }} · {{ c.brand }} {{ c.model }} · {{ c.fault_category.replace('_',' ') }}</div>
+    </div>
+    <div class="ax-dh-meta">
+      <span class="ax-dh-chip">{{ c.status }}</span>
+    </div>
+  </div>
+
+  {% if c.status == 'Approved' %}
+    {{ ui.alert("Good news — your claim has been approved! Your product is covered under the warranty terms.", "valid") }}
+  {% elif c.status == 'Rejected' %}
+    {{ ui.alert("We're sorry — this claim was not approved. The reason is explained below.", "invalid") }}
+  {% elif c.status == 'Closed' %}
+    {{ ui.alert("This claim has been completed and closed. Thank you for using AssureX.", "info") }}
+  {% else %}
+    {{ ui.alert("Your claim is with our review team. Most claims are decided within 2–3 business days — we'll notify you the moment there's an update.", "review") }}
+  {% endif %}
+
+  {{ ui.section("📍", "Progress") }}
+  <div class="ax-card">
+    {% set stage = 0 if c.status in ('Manual Review', 'Additional Information Required') else
+                    (1 if c.status in ('Approved', 'Rejected') else 2) %}
+    <div class="ax-stepper">
+      <div class="ax-step ax-step--done"><div class="ax-step-dot">📤</div><div class="ax-step-label">Submitted</div></div>
+      <div class="ax-step {{ 'ax-step--done' if stage >= 1 else 'ax-step--active' }}"><div class="ax-step-dot">🔍</div><div class="ax-step-label">In review</div></div>
+      <div class="ax-step {{ 'ax-step--done' if stage >= 2 }}"><div class="ax-step-dot">{{ '🏁' if stage >= 2 else '⏳' }}</div><div class="ax-step-label">Decided</div></div>
+    </div>
+  </div>
+
+  {{ ui.section("📌", "Your claim") }}
+  <div class="ax-card">
+    {{ ui.kv_grid([
+      ("Product", c.brand ~ " " ~ c.model),
+      ("Fault reported", c.fault_category.replace('_',' ') ~ " on " ~ c.fault_date),
+      ("Warranty at time of claim", "Active" if c.derived_features and not c.derived_features.warranty_expired else ("Expired" if c.derived_features else "—")),
+      ("Submitted", c.claim_date)
+    ]) }}
+  </div>
+
+  {% if c.status == 'Additional Information Required' and c.reviewer_comment %}
+  {{ ui.section("📨", "We need something from you") }}
+  <div class="ax-card">
+    <p style="font-size:.93rem;">{{ c.reviewer_comment }}</p>
+    {{ ui.alert("Please contact support with the requested information so we can continue processing your claim.", "info") }}
+  </div>
+  {% endif %}
+
+  {% if c.status == 'Rejected' or c.final_decision == 'Likely Invalid' %}
+  {{ ui.section("💬", "Why this decision") }}
+  <div class="ax-why-card">
+    <div class="ax-why-head"><h4>Reason(s)</h4></div>
+    <ul class="ax-why-list ax-why-list--con">
+      {% set r = c.rules_outcome %}
+      {% if r.hard_fails %}
+        {% for f in r.hard_fails %}<li>{{ f }}</li>{% endfor %}
+      {% elif c.explanation.oppose %}
+        {% for f in c.explanation.oppose[:4] %}<li>{{ f }}</li>{% endfor %}
+      {% else %}<li>The claim did not meet the warranty policy conditions.</li>{% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if counterfactuals %}
+  {{ ui.section("💡", "What would have changed this decision") }}
+  <div class="ax-card">
+    <ul class="ax-why-list ax-why-list--info">
+      {% for f in counterfactuals %}<li>{{ f }}</li>{% endfor %}
+    </ul>
+    {{ ui.alert("This analysis is automatic — if your circumstances match any of the scenarios above, you may submit a new claim with the corrected information.", "info") }}
+  </div>
+  {% endif %}
+
+  {% if c.documents %}
+  {{ ui.section("📎", "Your documents") }}
+  <div class="ax-card">
+    {% for d in c.documents %}
+    <div class="ax-doc-item">
+      <span>📎 <b>{{ d.type.replace('_',' ')|title }}</b> — {{ d.filename }} · {{ "%.0f"|format(d.size / 1024) }} KB</span>
+      <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_doc_download', cid=c.claim_id, index=loop.index0) }}">⬇️</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if c.dispatch %}
+  {{ ui.section("🔧", "Your repair booking") }}
+  <div class="ax-card">
+    {{ ui.kv_grid([
+      ("Service center", c.dispatch.center_name),
+      ("City", c.dispatch.center_city),
+      ("Expected by", c.dispatch.deadline),
+      ("Contact", c.dispatch.center_phone)
+    ]) }}
+    {{ ui.alert("Keep your product and purchase receipt available for the service center visit.", "info") }}
+  </div>
+  {% elif c.final_decision == 'Likely Valid' and c.status in ('Approved', 'Closed') %}
+  {{ ui.section("🔧", "Book your repair") }}
+  <div class="ax-card">
+    <p style="font-size:.9rem;">Your claim is approved — schedule a certified repair near you.</p>
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_dispatch', cid=c.claim_id) }}">🔧 Find a service center</a>
+  </div>
+  {% endif %}
+
+  {{ ui.section("🕓", "History") }}
+  <div class="ax-card">{{ ui.timeline(c.timeline) }}</div>
+
+  <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Claim report</a>
+    <a class="ax-btn" href="{{ url_for('new_claim') }}">➕ New claim</a>
+    <a class="ax-btn" href="{{ url_for('claims') }}">📁 My claims</a>
+  </div>
+
+{% endif %}
 {% endblock %}

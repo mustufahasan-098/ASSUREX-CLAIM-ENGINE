@@ -72,17 +72,16 @@ NAV = {
                  ("products", "My Products", "📦"),
                  ("new_claim", "New Claim", "📝"),
                  ("claims", "My Claims", "📁")],
-    "service_center": [("dashboard", "Dashboard", "🏠"),
-                       ("products", "My Products", "📦"),
+    "service_center": [("service_desk", "Service Desk", "🏪"),
                        ("new_claim", "New Claim", "📝"),
-                       ("claims", "My Claims", "📁")],
+                       ("claims", "All Claims", "🗂️")],
     "reviewer": [("review_queue", "Review Queue", "⚖️"),
                  ("claims", "All Claims", "🗂️"),
                  ("dashboard", "Dashboard", "🏠")],
     "admin": [("admin", "Admin Analytics", "📊"),
+              ("admin_approvals", "Account Approvals", "🛡️"),
               ("admin_templates", "Product Catalog", "🗃️"),
               ("review_queue", "Review Queue", "⚖️"),
-              ("products", "My Products", "📦"),
               ("claims", "All Claims", "🗂️")],
 }
 
@@ -196,6 +195,8 @@ def home():
         return redirect(url_for("admin"))
     if role == "reviewer":
         return redirect(url_for("review_queue"))
+    if role == "service_center":
+        return redirect(url_for("service_desk"))
     return redirect(url_for("dashboard"))
 
 
@@ -376,7 +377,6 @@ def products():
     return render_template("products.html", items=items, counts=counts,
                            categories=list(policies), policies=policies,
                            templates=templates, tpl=tpl)
-
 # -------------------------------------------------------------- new claim
 @app.route("/new_claim", methods=["GET", "POST"])
 @login_required(roles=["customer", "service_center"])
@@ -419,7 +419,13 @@ def new_claim_form(product_id):
     staged = session.get("staged_docs", [])
     missing = [d for d in policy["mandatory_documents"]
                if not any(s["type"] == d for s in staged)]
-    return render_template("new_claim.html", step="form", P=P, policy=policy,
+    acting_for = request.values.get("for", "").strip().lower()
+    if acting_for and g.user["role"] == "service_center" and \
+            not fdb.get_doc("users", acting_for):
+        flash(f"Customer {acting_for} not found.", "error")
+        acting_for = ""
+    return render_template("new_claim.html", step="form", P=P,
+                           acting_for=acting_for, policy=policy,
                            ocr_verify=session.get("ocr_verify"),
                            expiry=expiry,
                            left=(expiry - date.today()).days,
@@ -502,8 +508,17 @@ def new_claim_submit():
 
     repair_count = int(request.form.get("repair_count", 0) or 0)
     staged = session.get("staged_docs", [])
+    # service centers may file on behalf of a named customer
+    acting_for = request.form.get("acting_for", "").strip().lower()
+    owner = user["email"]
+    if acting_for and user["role"] == "service_center":
+        if fdb.get_doc("users", acting_for):
+            owner = acting_for
+        else:
+            flash(f"Customer {acting_for} not found - claim filed under "
+                  f"your center account.", "warning")
     claim = {
-        "claim_id": "", "user_id": user["email"], "product_id": pid,
+        "claim_id": "", "user_id": owner, "product_id": pid,
         "product_category": P["product_category"],
         "brand": P["brand"], "model": P["model"],
         "serial_number": serial, "purchase_date": P["purchase_date"],
@@ -537,20 +552,31 @@ def new_claim_submit():
         if p.exists():
             docs.append({"name": meta["name"], "type": meta["type"],
                          "bytes": p.read_bytes(), "sha256": meta["sha256"]})
-    try:
-        result = cs.process_and_save(claim, docs, actor=user["email"])
-    except Exception as e:
-        flash(f"Evaluation failed: {e}", "error")
-        return redirect(url_for("new_claim_form", product_id=pid))
-    _clear_staging()
-        # receipt verification result flows into the fusion engine
+    # receipt verification flows into the fusion engine (must be set
+    # BEFORE evaluation - the old copy of this code was after the return
+    # and never ran)
     ocr_v = session.get("ocr_verify")
     if ocr_v and ocr_v.get("verdict") == "mismatch":
         claim["_dup"] = dict(claim.get("_dup") or {})
         claim["_dup"]["doc_mismatch"] = True
         claim["_dup"]["doc_mismatch_note"] = ocr_v.get("summary", "")
-        claim["ocr_verification"] = session.get("ocr_verify") or {}
+    claim["ocr_verification"] = session.get("ocr_verify") or {}
+
+    try:
+        result = cs.process_and_save(claim, docs, actor=user["email"])
+    except Exception as e:
+        flash(f"Evaluation failed: {e}", "error")
+        return redirect(url_for("new_claim_form", product_id=pid))
+        _clear_staging()
+    from src import email_service
+    email_service.send_email(
+        owner,
+        "AssureX claim " + result["claim_id"] + " submitted",
+        "Your warranty claim " + result["claim_id"] + " has been submitted and evaluated."
+        + "\nDecision: " + result["decision"]["final"]
+        + "\nLog in to view the full analysis.\n\n- AssureX Claim Engine")
     return redirect(url_for("claim_detail", cid=result["claim_id"]))
+
 
 
 # ------------------------------------------------------------ claim detail
@@ -561,14 +587,49 @@ def claim_detail(cid):
     if not c or not _can_view(g.user, c):
         abort(404)
     risk_score, risk_reasons, risk_tone = fraud_risk(c)
+
+    # ---- defensive field access: old claims may predate some fields ----
+    def safe(field, default):
+        v = c.get(field)
+        return v if v not in (None, "") else default
+
+    py_probs = safe("python_probs", {})
+    tm_probs = safe("tm_probs", {})
+    if not py_probs:   # reconstruct from stored top conf if detail missing
+        py_probs = {safe("python_pred", "Manual Review"): 0.0}
+    if not tm_probs:
+        tm_probs = {safe("tm_pred", "Manual Review"): 0.0}
+    c["python_probs"] = py_probs
+    c["tm_probs"] = tm_probs
+    c.setdefault("explanation", {"support": [], "oppose": [], "warnings": []})
+    c.setdefault("rules_outcome", {"label": "—", "contradictions": [],
+                                   "hard_fails": [], "review_flags": [],
+                                   "warnings": []})
+    c.setdefault("duplicates", {"prior_claims": 0, "invoice_reused": False,
+                                "doc_hash_reuse": False})
+    c.setdefault("documents", [])
+    c.setdefault("timeline", [])
+    c.setdefault("consistency", "—")
+    c.setdefault("conf_diff", 0.0)
+    c.setdefault("model_versions", {"python": "—", "tm": "—"})
+    c.setdefault("py_top_conf", 0.0)
+    c.setdefault("tm_top_conf", 0.0)
+    c.setdefault("status", "Manual Review")
+    c.setdefault("final_decision", "Manual Review Required")
+
+    status_icon = {"Approved": "✅", "Rejected": "❌", "Closed": "🏁",
+                   "Manual Review": "⏳",
+                   "Additional Information Required": "📨"}.get(
+                       c.get("status", ""), "📋")
+
     return render_template(
         "claim_result.html", c=c,
-        py_short=c.get("python_pred", "").replace(" Claim", ""),
-        tm_short=c.get("tm_pred", "").replace(" Claim", ""),
+        py_short=safe("python_pred", "—").replace(" Claim", ""),
+        tm_short=safe("tm_pred", "—").replace(" Claim", ""),
         py_tone=CLASS_TONE.get(c.get("python_pred", ""), "neutral"),
         tm_tone=CLASS_TONE.get(c.get("tm_pred", ""), "neutral"),
         risk_score=risk_score, risk_reasons=risk_reasons,
-        risk_tone=risk_tone)
+        risk_tone=risk_tone, status_icon=status_icon)
 
 
 @app.route("/claim/<cid>/card.png")
@@ -694,6 +755,10 @@ def review_action(cid):
         fdb.notify(c["owner_email"], cid,
                    f"Claim {cid}: additional information required — "
                    f"{comment or 'please contact support.'}")
+
+        from src import email_service
+        email_service.notify_claim_decision(
+            c.get("owner_email"), cid, "Additional information required")
         flash(f"📨 Info requested on {cid}.", "success")
         return redirect(url_for("review_queue"))
 
@@ -719,6 +784,9 @@ def review_action(cid):
                    "override": override})
     fdb.notify(c["owner_email"], cid,
                f"Claim {cid} {status.lower()} by reviewer.")
+
+    from src import email_service
+    email_service.notify_claim_decision(c.get("owner_email"), cid, status)
     flash(f"{'⚠️ Override recorded — ' if override else ''}"
           f"Claim {cid} {status.lower()}.", "success")
     return redirect(url_for("review_queue"))
@@ -757,11 +825,43 @@ def admin():
              "Manual Review Required": "Manual Review"}[label], "neutral"),
             pct))
 
+    from collections import Counter
+    chart_labels = ["Likely Valid", "Likely Invalid", "Manual Review"]
+    chart_values = [by_final.get(l, 0) for l in chart_labels]
+
+    cat_counts = Counter(c.get("product_category", "Other") for c in claims)
+    category_labels = list(cat_counts.keys())
+    category_values = list(cat_counts.values())
+
+    fault_counts = Counter(c.get("fault_category", "unknown").replace("_", " ")
+                           for c in claims).most_common(8)
+    fault_labels = [f for f, _ in fault_counts] or ["none"]
+    fault_values = [n for _, n in fault_counts] or [0]
+
+    day_counts = Counter((c.get("created_at") or "")[:10] for c in claims
+                         if (c.get("created_at") or "")[:10])
+    days_sorted = sorted(day_counts)
+    day_labels = [d[5:] for d in days_sorted] or ["none"]
+    day_values = [day_counts[d] for d in days_sorted] or [0]
+
+    reject_reasons = Counter()
+    for c in claims:
+        for hf in (c.get("rules_outcome", {}).get("hard_fails") or []):
+            reject_reasons[hf.split("(")[0].strip()[:38]] += 1
+    reject_sorted = reject_reasons.most_common(6)
+    reject_labels = [r for r, _ in reject_sorted] or ["no rejections yet"]
+    reject_values = [n for _, n in reject_sorted] or [0]
+
     return render_template(
         "admin.html", empty=False, claims=claims, users=users, audit=audit,
         total=len(claims), by_final=by_final, pending=pending,
         disagreements=disagreements, dupes=dupes,
-        avg_py=avg_py, avg_tm=avg_tm, chart=chart)
+        avg_py=avg_py, avg_tm=avg_tm,
+        chart_labels=chart_labels, chart_values=chart_values,
+        category_labels=category_labels, category_values=category_values,
+        fault_labels=fault_labels, fault_values=fault_values,
+        day_labels=day_labels, day_values=day_values,
+        reject_labels=reject_labels, reject_values=reject_values)
 
 
 @app.route("/admin/export")
@@ -1117,8 +1217,82 @@ def claim_dispatch_confirm(cid):
     fdb.notify(c["owner_email"], cid,
                f"Claim {cid}: repair scheduled at {center['name']} - "
                f"expected by {deadline}. Contact: {center['phone']}")
+
+    from src import email_service
+    email_service.send_email(
+        c.get("owner_email"),
+        "AssureX claim " + cid + ": repair scheduled",
+        "Your approved claim " + cid + " has been scheduled for repair at "
+        + center["name"] + " (" + center["city"] + ")."
+        + "\nExpected completion by: " + deadline
+        + "\nContact: " + center["phone"] + "\n\n- AssureX Claim Engine")
     flash(f"🔧 Repair scheduled at {center['name']} — SLA deadline "
           f"{deadline}.", "success")
     return redirect(url_for("claim_detail", cid=cid))
+
+
+# ------------------------------------------------------ service desk
+@app.route("/desk")
+@login_required(roles=["service_center"])
+def service_desk():
+    user = g.user
+    claims = fdb.all_docs("claims", limit=500)
+    filed = [c for c in claims
+             if any(t.get("actor") == user["email"]
+                    for t in c.get("timeline", []))][-15:]
+    filed.sort(key=lambda c: c.get("created_at", ""), reverse=True)
+    products = fdb.all_docs("products", limit=500)
+    registered_by_us = [p for p in products
+                         if p.get("registered_by") == user["email"]][-10:]
+    return render_template("service_desk.html", claims=filed,
+                           products=registered_by_us)
+
+
+# ------------------------------------------------ account approvals
+@app.route("/admin/approvals")
+@login_required(roles=["admin"])
+def admin_approvals():
+    all_users = fdb.all_docs("users", limit=500)
+    pending_users = [u for u in all_users if u.get("status") == "pending"]
+    stats = [
+        {"label": "Pending approvals", "value": len(pending_users),
+         "icon": "⏳", "tone": "review" if pending_users else "neutral"},
+        {"label": "Active users",
+         "value": sum(1 for u in all_users
+                      if u.get("status", "active") == "active"),
+         "icon": "✅", "tone": "valid"},
+    ]
+    return render_template("admin_approvals.html", users=pending_users,
+                           stats=stats)
+
+
+@app.route("/admin/approvals/<email>/action", methods=["POST"])
+@login_required(roles=["admin"])
+def admin_approval_action(email):
+    action = request.form.get("action")
+    doc = fdb.get_doc("users", email)
+    if not doc:
+        abort(404)
+    if action == "approve":
+        fdb.set_doc("users", email, {"status": "active"}, merge=True)
+        fdb.log_audit("user_approved", g.user["email"], {"user": email})
+        fdb.notify(email, None, "Your AssureX account has been approved - "
+                   "you can now log in.")
+        from src import email_service
+        ok, err = email_service.notify_account_approved(
+            email, doc.get("name", ""), doc.get("role", ""))
+        if ok:
+            flash(f"✅ Approved {email} - notification email sent.",
+                  "success")
+        else:
+            flash(f"✅ Approved {email} - in-app notification sent "
+                  f"(email: {err}).", "success")
+    elif action == "reject":
+        fdb.set_doc("users", email, {"status": "rejected"}, merge=True)
+        fdb.log_audit("user_rejected", g.user["email"], {"user": email})
+        flash(f"⛔ Rejected {email}.", "warning")
+    return redirect(url_for("admin_approvals"))
+
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)

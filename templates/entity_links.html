@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Entity Link Analysis — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("🔗", "Entity Link Analysis", "Shared-entity clustering across all claims — coordinated fraud detection without collecting any new data") }}
+
+{{ ui.stat_row([
+  {"label": "Claims analyzed", "value": total_claims, "icon": "📁", "tone": "neutral"},
+  {"label": "Shared entities", "value": links|length, "icon": "🔗", "tone": "info"},
+  {"label": "Syndicate clusters", "value": clusters|length, "icon": "🕸️", "tone": "invalid" if clusters else "valid"},
+  {"label": "Claims in clusters", "value": cluster_claims, "icon": "🚩", "tone": "review" if clusters else "neutral"}
+]) }}
+
+{% if clusters %}
+{{ ui.alert("⚠️ " ~ clusters|length ~ " potential fraud ring(s) detected — clusters of claims linked by multiple shared entities across users. All member claims are escalated to priority review.", "invalid") }}
+{% else %}
+{{ ui.alert("No syndicate clusters detected. Claims sharing documents, invoices or serials across users appear here automatically.", "valid") }}
+{% endif %}
+
+{{ ui.section("🕸️", "Entity graph") }}
+<div class="ax-card" style="padding:10px;">
+  <div id="entityGraph" style="height:520px; background:var(--glass); border:1px solid var(--stroke-soft); border-radius:var(--r-lg); position:relative; overflow:hidden;">
+    <div class="eg-tip" id="egTip" style="position:absolute; pointer-events:none; z-index:10; background:rgba(13,18,32,.95); border:1px solid var(--stroke); border-radius:var(--r-sm); padding:8px 12px; font-size:.78rem; color:var(--t-hi); display:none; max-width:260px; box-shadow:var(--sh-2);"></div>
+  </div>
+  <p style="font-size:.74rem; color:var(--t-low); padding:8px 10px 2px;">
+    ● Circles = claims (green approved · amber review · <span style="color:#FF6B6B;">red = fraud-ring member</span>) · ■ Squares = shared entities · drag nodes to explore · click a claim to open it</p>
+</div>
+
+{{ ui.section("🔗", "All shared entities") }}
+{% if not links %}
+  {{ ui.empty_state("🔗", "No shared entities", "When two claims share an invoice, document fingerprint, serial number or retailer-price combination, the link appears here.") }}
+{% else %}
+<div class="ax-card" style="overflow-x:auto;">
+  <table class="ax-table">
+    <thead><tr><th>Entity type</th><th>Value</th><th>Shared by</th></tr></thead>
+    <tbody>
+    {% for ent, ids in links.items() %}
+      <tr>
+        <td class="ax-table-strong">{{ ent[0]|replace('_',' ')|title }}</td>
+        <td><code>{{ ent[1] }}</code></td>
+        <td>{{ ids|join(", ") }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if clusters %}
+{{ ui.section("🚩", "Syndicate clusters (potential fraud rings)") }}
+{% for cl in clusters %}
+<details class="ax-details" open>
+  <summary>🚩 Cluster {{ loop.index }} — {{ cl.members|length }} claims · {{ cl.owners|length }} owner(s) · linked by {{ cl.link_types|join(", ") }}</summary>
+  <div class="ax-details-body">
+    <div style="margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      {% for lt in cl.link_types %}
+        <span class="ax-badge ax-badge--invalid">{{ lt|replace('_',' ')|title }}</span>
+      {% endfor %}
+      {% for o in cl.owners %}
+        <span class="ax-badge ax-badge--neutral">{{ o }}</span>
+      {% endfor %}
+    </div>
+    <ul class="ax-why-list ax-why-list--con">
+      {% for ent, ids in cl.links.items() %}
+        <li><b>{{ ent[0]|replace('_',' ')|title if ent is iterable and ent|length > 1 else ent }}</b>: {{ ent[1] if ent is iterable and ent|length > 1 else '' }} — shared by {{ ids|join(", ") }}</li>
+      {% endfor %}
+    </ul>
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      {% for cid in cl.members %}
+        <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_detail', cid=cid) }}">{{ cid }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</details>
+{% endfor %}
+{% endif %}
+
+<div class="ax-card" style="margin-top:14px;">
+  <h4>🛡️ Privacy by design</h4>
+  <p style="font-size:.85rem;">This analysis uses only data already stored with each claim (invoices, document fingerprints, serial numbers, owners, retailer-price combinations). No EXIF/GPS extraction, no device fingerprinting, no new data collection — privacy constraints are honored by construction.</p>
+</div>
+
+<div style="margin-top:14px;">
+  <p style="font-size:.78rem; color:var(--t-low);">
+    🔎 How it works: every claim's linkable entities are extracted and compared across the database. Claims sharing entities are linked; clusters of 3+ claims from multiple owners sharing 2+ entity types are flagged as potential fraud rings and escalated to priority review. The <code>syndicate_min_cluster</code> setting in <code>config/settings.yaml</code> controls sensitivity.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script>
+(function () {
+  var raw = {{ graph_json | safe }};
+  var data = (typeof raw === 'string') ? JSON.parse(raw) : raw;
+  var container = document.getElementById('entityGraph');
+  var tip = document.getElementById('egTip');
+
+  var W = container.clientWidth || 900, H = 500;
+
+  var svg = d3.select(container).append('svg')
+    .attr('width', W).attr('height', H)
+    .attr('viewBox', [0, 0, W, H]);
+
+  var g = svg.append('g');   // zoomable group
+
+  // ---- zoom
+  svg.call(d3.zoom().scaleExtent([0.3, 4])
+    .on('zoom', function (ev) { g.attr('transform', ev.transform); }));
+
+  // ---- links
+  var link = g.append('g')
+    .selectAll('line')
+    .data(data.edges)
+    .join('line')
+    .attr('stroke', 'rgba(255,255,255,.14)')
+    .attr('stroke-width', 1.2);
+
+  // ---- nodes
+  var FILL = { valid: '#3DDC97', review: '#FFC24B', invalid: '#FF6B6B' };
+
+  var glow = g.append('g').selectAll('circle.halo')
+    .data(data.nodes.filter(function (n) { return n.tone === 'invalid'; }))
+    .join('circle')
+    .attr('class', 'halo')
+    .attr('r', 18)
+    .attr('fill', 'rgba(255,107,107,.16)');
+
+  var node = g.append('g')
+    .selectAll('.node')
+    .data(data.nodes)
+    .join('g')
+    .attr('class', 'node')
+    .style('cursor', 'pointer')
+    .call(d3.drag()
+      .on('start', function (ev, d) {
+        if (!ev.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag', function (ev, d) { d.fx = ev.x; d.fy = ev.y; })
+      .on('end', function (ev, d) {
+        if (!ev.active) simulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      }));
+
+  node.each(function (d) {
+    var el = d3.select(this);
+    if (d.type === 'claim') {
+      el.append('circle')
+        .attr('r', d.tone === 'invalid' ? 9 : 7)
+        .attr('fill', FILL[d.tone] || '#A8B3C7')
+        .attr('stroke', '#0D1220').attr('stroke-width', 2);
+    } else {
+      el.append('rect')
+        .attr('width', 12).attr('height', 12)
+        .attr('x', -6).attr('y', -6).attr('rx', 2)
+        .attr('fill', '#3E6FD9').attr('stroke', '#8CA4FF');
+    }
+    el.append('text')
+      .attr('y', d.type === 'claim' ? 20 : 16)
+      .attr('text-anchor', 'middle')
+      .attr('font-family', 'JetBrains Mono, Consolas, monospace')
+      .attr('font-size', 9).attr('fill', '#A8B3C7')
+      .attr('pointer-events', 'none')
+      .text(d.label.slice(-12));
+  });
+
+  // ---- tooltips + click
+  node.on('mousemove', function (ev, d) {
+    var rect = container.getBoundingClientRect();
+    tip.style.display = 'block';
+    tip.style.left = (ev.clientX - rect.left + 14) + 'px';
+    tip.style.top = (ev.clientY - rect.top + 10) + 'px';
+    tip.innerHTML = d.type === 'claim'
+      ? '<b style="color:#8CA4FF;">' + d.id + '</b><br>' + d.owner +
+        '<br>Status: ' + d.status
+      : '<b style="color:#8CA4FF;">Shared entity</b><br>' + d.label;
+  })
+  .on('mouseleave', function () { tip.style.display = 'none'; })
+  .on('click', function (ev, d) {
+    if (d.type === 'claim')
+      window.location.href = '/claim/' + encodeURIComponent(d.id);
+  });
+
+  // ---- the simulation (d3-force: charge repulsion, link springs,
+  //      centering, collision - the real physics engine)
+  var simulation = d3.forceSimulation(data.nodes)
+    .force('link', d3.forceLink(data.edges)
+      .id(function (d) { return d.id; })
+      .distance(70).strength(0.4))
+    .force('charge', d3.forceManyBody().strength(-220))
+    .force('center', d3.forceCenter(W / 2, H / 2))
+    .force('collide', d3.forceCollide().radius(24))
+    .on('tick', function () {
+      link.attr('x1', function (d) { return d.source.x; })
+          .attr('y1', function (d) { return d.source.y; })
+          .attr('x2', function (d) { return d.target.x; })
+          .attr('y2', function (d) { return d.target.y; });
+      glow.attr('cx', function (d) { return d.x; })
+          .attr('cy', function (d) { return d.y; });
+      node.attr('transform', function (d) {
+        return 'translate(' + d.x + ',' + d.y + ')'; });
+    });
+})();
+</script>
+{% endblock %}

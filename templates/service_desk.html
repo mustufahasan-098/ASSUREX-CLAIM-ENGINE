@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}Service Desk — AssureX{% endblock %}
+{% block content %}
+{{ ui.hero("🏪", "Service Desk", "Register products and file claims on behalf of walk-in customers") }}
+
+{{ ui.stat_row([
+  {"label": "Claims filed", "value": claims|length, "icon": "📝", "tone": "neutral"},
+  {"label": "Products registered", "value": products|length, "icon": "📦", "tone": "valid"}
+]) }}
+
+{{ ui.section("⚡", "Quick actions") }}
+<div class="ax-grid-2">
+  <div class="ax-card">
+    <h4>📝 File a claim for a customer</h4>
+    <form method="get" action="{{ url_for('new_claim') }}" style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div class="ax-field" style="flex:1; min-width:200px; margin:0;">
+        <label>Customer email</label>
+        <input class="ax-input" name="for" type="email" required placeholder="customer@example.com">
+      </div>
+      <button class="ax-btn ax-btn--primary" type="submit" style="align-self:flex-end;">Start claim →</button>
+    </form>
+    <p style="font-size:.8rem; color:var(--t-low); margin-top:10px;">The claim is filed under the customer\'s account — they track it, you file it.</p>
+  </div>
+  <div class="ax-card">
+    <h4>📦 Register a product</h4>
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('products') }}">Register product for customer</a>
+    <p style="font-size:.8rem; color:var(--t-low); margin-top:10px;">Use the "Register for customer" field to attach the product to the customer\'s account.</p>
+  </div>
+</div>
+
+{{ ui.section("🗂️", "Recent claims filed by your center") }}
+{% if not claims %}
+  {{ ui.empty_state("📭", "No claims filed yet", "File your first claim using the quick action above.") }}
+{% else %}
+  {% for c in claims %}
+  <details class="ax-details">
+    <summary><b>{{ c.claim_id }}</b> — {{ c.get('brand','') }} {{ c.get('model','') }} · for {{ c.owner_email }}
+      <span style="margin-left:auto;">{{ ui.status_badge(c.status) }}</span></summary>
+    <div class="ax-details-body">
+      <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_detail', cid=c.claim_id) }}">View claim</a>
+    </div>
+  </details>
+  {% endfor %}
+{% endif %}
+{% endblock %}

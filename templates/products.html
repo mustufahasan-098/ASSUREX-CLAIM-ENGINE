@@ -99,6 +99,7 @@
     <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
       {{ ui.badge("Covered: " ~ (item.pol.covered_faults[:3]|join(", ")) ~ "…", "valid") }}
       {{ ui.badge("Excluded: " ~ (item.pol.excluded_faults[:2]|join(", ")), "invalid") }}
+      {{ ui.badge("Fault risk: " ~ item.risk_level, "valid" if item.risk_level == "LOW" else ("review" if item.risk_level == "ELEVATED" else "invalid")) }}
       {{ ui.badge("Report within " ~ item.pol.claim_reporting_period_days ~ " days", "info") }}
       {{ ui.badge("Required docs: " ~ item.pol.mandatory_documents|join(", "), "neutral") }}
     </div>
