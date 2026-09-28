@@ -64,23 +64,23 @@ def decide(rule_out, cmp, py_pred, tm_pred, py_probs, tm_probs, cfg, dup):
     if not hard and not contra:
         support.append("No hard-fail warranty rules triggered")
 
-    # ---- priority 1: contradictory data cannot be auto-decided
+     
     if contra:
         final = "Manual Review Required"
         oppose.append("Contradictory claim data detected - cannot be "
                       "auto-decided:")
         oppose += contra
-    # ---- priority 2: hard rule violations
+     
     elif hard:
         final = "Likely Invalid"
         oppose.append("Warranty rule violations:")
         oppose += hard
-    # ---- priority 3: review-level conditions
+     
     elif flags:
         final = "Manual Review Required"
         oppose.append("Conditions require manual verification:")
         oppose += flags
-    # ---- priority 4: models + rules both clean -> decide by agreement
+     
     else:
         if (cmp["match"] and py_pred == "Valid Claim"
                 and cmp["consistency"] in ("Strong Match", "Acceptable Match")):
@@ -95,9 +95,9 @@ def decide(rule_out, cmp, py_pred, tm_pred, py_probs, tm_probs, cfg, dup):
                           f"({cmp['consistency']})")
         elif (not cmp["match"] and py_pred == "Valid Claim"
               and cmp["consistency"] == "Uncertain Result"):
-            # hedged dissent: the agreeing model says Valid, the dissenter
-            # is below the disagreement margin (uncertain, not opposed).
-            # Rules passed clean - approve with the uncertainty noted.
+     
+     
+     
             final = "Likely Valid"
             support.append(f"Python model supports Valid Claim with all "
                            f"warranty rules passing")
@@ -108,8 +108,8 @@ def decide(rule_out, cmp, py_pred, tm_pred, py_probs, tm_probs, cfg, dup):
         elif (not cmp["match"] and tm_pred == "Valid Claim"
               and cmp["consistency"] == "Uncertain Result"
               and tm_top >= 0.90):
-            # the confident reader (TM >= 90%) says Valid on a clean-rule
-            # claim; the other model hedged - approve with uncertainty note
+     
+     
             final = "Likely Valid"
             support.append(f"Teachable Machine model highly confident "
                            f"({tm_top:.0%}) that the claim facts are valid")
@@ -136,7 +136,7 @@ def decide(rule_out, cmp, py_pred, tm_pred, py_probs, tm_probs, cfg, dup):
                 oppose.append(f"Models agree on '{py_pred}' while all rules "
                               f"passed - human confirmation advised")
 
-    # ---- duplicate indicators can only downgrade, never upgrade
+     
     if dup.get("invoice_reused"):
         oppose.append("Invoice number already used in a previous claim")
         if final == "Likely Valid":
@@ -168,7 +168,7 @@ def decide(rule_out, cmp, py_pred, tm_pred, py_probs, tm_probs, cfg, dup):
         if final in ("Likely Valid", "Likely Invalid"):
             final = "Manual Review Required"
 
-    # ---- confidence annotations (never change the decision, only explain)
+     
     if cmp["match"] and cmp["conf_diff"] > cfg["acceptable_match_max_diff"]:
         oppose.append(f"Large confidence difference between models "
                       f"({cmp['conf_diff']:.2f})")

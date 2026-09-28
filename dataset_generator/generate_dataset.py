@@ -47,7 +47,7 @@ PRODUCTS = {
     ],
 }
 
-# scenario name -> (label, count). Each class sums to exactly 500.
+     
 SCENARIOS = {
     "Valid Claim": [
         ("clean_active_warranty", 280),
@@ -75,7 +75,7 @@ SCENARIOS = {
 }
 
 
-# ------------------------------------------------------------------ helpers
+     
 def base_claim(rng, category, policy, min_purchase_age_days=None):
     """Random claim skeleton. Purchase date is pushed far enough back that
     every downstream date (fault, claim) stays before the ANCHOR date, so no
@@ -145,7 +145,7 @@ def add_authorized_repair(rng, claim):
     return claim
 
 
-# ------------------------------------------------------- valid scenarios
+     
 def sc_clean_active_warranty(rng, cat, pol):
     return set_valid_timing(rng, base_claim(rng, cat, pol), pol)
 
@@ -184,7 +184,7 @@ def sc_boundary_reported_on_deadline(rng, cat, pol):
     return c
 
 
-# ----------------------------------------------------- invalid scenarios
+     
 def sc_expired_warranty_beyond_grace(rng, cat, pol):
     span = int(pol["standard_warranty_months"]) * 31
     need = span + int(pol["grace_period_days"]) + 440 + int(pol["claim_reporting_period_days"])
@@ -223,7 +223,7 @@ def sc_product_already_replaced(rng, cat, pol):
     return c
 
 
-# ------------------------------------------------- manual-review scenarios
+     
 def sc_missing_mandatory_documents(rng, cat, pol):
     c = sc_clean_active_warranty(rng, cat, pol)
     docs = pol["mandatory_documents"]
@@ -295,7 +295,7 @@ SCENARIO_FN = {name: globals()[f"sc_{name}"]
                for label in SCENARIOS for name, _ in SCENARIOS[label]}
 
 
-# ------------------------------------------------------------------ main
+     
 def generate():
     rng = random.Random(SEED)
     policies = load_policies()
@@ -306,7 +306,7 @@ def generate():
     for label, scen_list in SCENARIOS.items():
         for scen_name, count in scen_list:
             for _ in range(count):
-                # grace-period scenario only makes sense where a grace period exists
+     
                 cat = rng.choice(grace_ok) if scen_name == "fault_within_grace_period" \
                     else rng.choice(list(policies))
                 claim = SCENARIO_FN[scen_name](rng, cat, policies[cat])

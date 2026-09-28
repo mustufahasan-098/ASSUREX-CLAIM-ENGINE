@@ -40,7 +40,7 @@ def register(name, email, password, role):
         return None, "Please enter a valid email address."
     if fdb.get_doc("users", email):
         return None, "An account with this email already exists."
-        # privileged roles require admin approval before activation
+     
     needs_approval = role in ("reviewer", "service_center")
     user = {"name": name.strip(), "email": email, "role": role,
             "status": "pending" if needs_approval else "active",

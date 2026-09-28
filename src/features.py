@@ -12,9 +12,9 @@ can never drift between training time and prediction time.
 import calendar
 from datetime import date, datetime, timedelta
 
-# Configurable date formats - the parser tries each in order. Adding a new
-# format (e.g. for the surprise-modification round) means adding one string
-# here later - no code changes anywhere else.
+     
+     
+     
 DATE_FORMATS = ["%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d"]
 
 

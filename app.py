@@ -1,23 +1,9 @@
-"""AssureX Claim Engine - Flask web application (complete).
 
-All evaluation logic lives in src/ (rule engine, Python ML model,
-Teachable Machine TFLite, fusion engine) - the presentation layer only
-collects input and renders results.
-
-Patterns used:
-  - Post/Redirect/Get (PRG) on every mutating route - no double submissions
-  - Server-side document staging with SHA-256 hashing (duplicate detection)
-  - OCR extract -> user verification -> submit (SRS req vi, vii)
-  - Role-based access control on every route (SRS req i)
-  - Fraud-risk engine computed from duplicate/contradiction indicators
-
-Run:  python app.py   ->  http://localhost:5000
-"""
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    pass  # .env optional - GROQ_API_KEY may be set in env
+    pass  
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from src import routing as service_routing
 from src import smart_lookup
@@ -69,16 +55,16 @@ CLASS_TONE = {"Valid Claim": "valid", "Invalid Claim": "invalid",
               "Manual Review": "review"}
 
 NAV = {
-    "customer": [("dashboard", "Dashboard", "🏠"),
-                 ("products", "My Products", "📦"),
-                 ("new_claim", "New Claim", "📝"),
-                 ("claims", "My Claims", "📁")],
-    "service_center": [("service_desk", "Service Desk", "🏪"),
-                       ("new_claim", "New Claim", "📝"),
-                       ("claims", "All Claims", "🗂️")],
-    "reviewer": [("review_queue", "Review Queue", "⚖️"),
-                 ("claims", "All Claims", "🗂️"),
-                 ("dashboard", "Dashboard", "🏠")],
+    "customer": [("dashboard", "Dashboard", ""),
+                 ("products", "My Products", ""),
+                 ("new_claim", "New Claim", ""),
+                 ("claims", "My Claims", "")],
+    "service_center": [("service_desk", "Service Desk", ""),
+                       ("new_claim", "New Claim", ""),
+                       ("claims", "All Claims", "")],
+    "reviewer": [("review_queue", "Review Queue", ""),
+                 ("claims", "All Claims", ""),
+                 ("dashboard", "Dashboard", "")],
     "admin": [("admin", "Admin Analytics", "📊"),
               ("admin_approvals", "Account Approvals", "🛡️"),
                             ("entity_links", "Entity Links", "🔗"),

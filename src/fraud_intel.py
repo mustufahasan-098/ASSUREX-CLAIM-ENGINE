@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SIMILAR_THRESHOLD = 10   # max hamming distance for "same image"
 
 
-# ---------------------------------------------------- layer 1: fingerprints
+     
 def dhash_from_bytes(data):
     """dHash (difference hash): 64-bit visual fingerprint. Robust to
     re-saving, re-compression and renaming - catches the copies that
@@ -45,7 +45,7 @@ def hamming(a, b):
     return sum(x != y for x, y in zip(a, b))
 
 
-# ---------------------------------------------------- layer 4: price norms
+     
 _PRICE_CACHE = {}
 
 
@@ -67,11 +67,11 @@ def category_price_stats():
     return _PRICE_CACHE
 
 
-# Realistic retail reference prices (PKR) per category.
-# The synthetic dataset's prices (uniform Rs 80-3,000) were designed for
-# decision-pattern coverage, not market realism - so the fraud layer uses
-# real-world reference values instead. Training data is intentionally
-# untouched; this affects only live fraud scoring.
+     
+     
+     
+     
+     
 REFERENCE_PRICES = {
     "Electronics": 85000,       # phones, laptops, TVs
     "Home Appliances": 65000,   # fridges, washing machines
@@ -99,7 +99,7 @@ def price_signal(claim):
     return []
 
 
-# --------------------------------------------- layers 2+3: velocity/history
+     
 def _days_ago(iso_str, today):
     try:
         return (today - datetime.fromisoformat(str(iso_str)[:10]).date()).days
@@ -131,7 +131,7 @@ def velocity_signals(owner_claims, serial_claims, today=None):
     return signals
 
 
-# --------------------------------------------------- layer 5: cross-user net
+     
 def network_signals(all_claims, current_owner, sha_list, phash_list,
                     current_invoice=None):
     """The same document (exact bytes OR near-identical image) used by a
@@ -149,8 +149,8 @@ def network_signals(all_claims, current_owner, sha_list, phash_list,
                                     for q in stored_ph) for p in phash_list)
         same_invoice = c.get("invoice_number") == current_invoice
         if similar_img and same_invoice:
-            # visually identical AND same invoice number - two independent
-            # confirmations, not layout coincidence
+     
+     
             hits.append((c.get("owner_email"), "same image + same invoice"))
     if hits:
         users = sorted({u for u, _ in hits})
@@ -161,7 +161,7 @@ def network_signals(all_claims, current_owner, sha_list, phash_list,
     return []
 
 
-# ------------------------------------------------------ layer 6: OCR weight
+     
 def ocr_signal(ocr_verify):
     v = (ocr_verify or {}).get("verdict")
     if v == "inconclusive":
@@ -171,7 +171,7 @@ def ocr_signal(ocr_verify):
     return []
 
 
-# -------------------------------------------------- base + aggregation
+     
 def base_signals(dup):
     s = []
     if dup.get("invoice_reused"):
@@ -200,7 +200,7 @@ def analyze(claim, dup, owner_claims, serial_claims, all_claims,
                                claim.get("invoice_number"))
     signals += price_signal(claim)
 
-    # receipt mismatch flagged at upload time (OCR cross-verification)
+     
     if claim.get("_dup", {}).get("doc_mismatch"):
         signals.append(("receipt_mismatch", 25,
                         claim["_dup"].get("doc_mismatch_note",
@@ -215,7 +215,7 @@ def analyze(claim, dup, owner_claims, serial_claims, all_claims,
     score = min(100, sum(p for _, p, _ in signals))
     families = len({c for c, _, _ in signals})
 
-    # layer 7: several independent indicator families reinforce each other
+     
     escalated = families >= 3 and score >= 40
     if escalated and score < 60:
         score = 60

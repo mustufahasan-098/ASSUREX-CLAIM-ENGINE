@@ -28,7 +28,7 @@ DOC_TYPES = ["receipt", "warranty_card", "product_image",
              "serial_evidence", "fault_evidence", "repair_report"]
 
 
-# ------------------------------------------------------------------ duplicates
+     
 def detect_duplicates(claim, docs):
     """Duplicate-claim and duplicate-document detection (req xxx, xxxi):
     same serial with prior claims, reused invoice numbers, and document
@@ -47,7 +47,7 @@ def detect_duplicates(claim, docs):
             "reused_doc_claims": sorted(set(doc_reuse))[:5]}
 
 
-# ------------------------------------------------------------------ pipeline
+     
 def process_claim(claim):
     """Runs the full dual-model evaluation for one claim dict.
     Returns every intermediate result (used by the result screen)."""
@@ -55,21 +55,21 @@ def process_claim(claim):
     policy = m["policies"][claim["product_category"]]
     cfg = m["settings"]["fusion"]
 
-    # 1. warranty rule engine (SRS step 11)
+     
     rules = evaluate_claim(claim, policy)
 
-    # 2. python classification model + confidence scores (SRS step 6)
+     
     X = build_feature_frame([claim], m["policies"])
     proba = m["py_model"].predict_proba(X)[0]
     py_probs = {cls: float(p) for cls, p in zip(m["le"].classes_, proba)}
     py_pred = max(py_probs, key=py_probs.get)
 
-    # 3. claim summary card -> teachable machine (SRS steps 7, 9)
+     
     card = render_card(claim, policy)
     tm_probs = m["tm"].predict(card)
     tm_pred = max(tm_probs, key=tm_probs.get)
 
-    # 4. comparison + fusion decision (SRS steps 10, 12)
+     
     cmp = compare_models(py_pred, py_probs, tm_pred, tm_probs, cfg)
     dup = claim.get("_dup", {})
     decision = decide(rules, cmp, py_pred, tm_pred, py_probs, tm_probs,
@@ -90,10 +90,10 @@ def process_and_save(claim, docs, actor):
     m = models_mod.load_all()
     claim["claim_id"] = fdb.next_claim_id()
 
-    # ---- duplicate detection + 7-layer fraud intelligence
+     
     incoming = claim.pop("_dup", {}) or {}
     dup = detect_duplicates(claim, docs)
-    # preserve receipt-mismatch flags computed at upload time (app.py)
+     
     for k, v in incoming.items():
         if k.startswith("doc_mismatch"):
             dup[k] = v
@@ -109,8 +109,8 @@ def process_and_save(claim, docs, actor):
     dup["fraud_score"] = fraud["score"]
     dup["fraud_escalated"] = fraud["escalated"]
 
-    # ---- syndicate cluster check: membership in a multi-user
-    # shared-entity cluster escalates regardless of model predictions
+     
+     
     from src import entity_links as el
     try:
         _all = fdb.all_docs("claims", limit=1000)
@@ -126,14 +126,14 @@ def process_and_save(claim, docs, actor):
     claim["_dup"] = dup
 
     res = process_claim(claim)
-    # derived-feature snapshot (SRS Step 3 - displayed on the result page)
+     
     from .features import compute_derived
     derived = compute_derived(claim, res["policy"])
     derived = {k: (v if not isinstance(v, list) else ", ".join(map(str, v)))
                for k, v in derived.items()}
     final = res["decision"]["final"]
 
-    # map the fusion decision onto the claim-status workflow (req xxxviii)
+     
     if final == "Likely Valid":
         status = "Approved"
     elif final == "Likely Invalid" and res["comparison"]["match"]:
@@ -141,7 +141,7 @@ def process_and_save(claim, docs, actor):
     else:
         status = "Manual Review"
 
-    # store uploaded files on disk, metadata (incl. sha256) in the record
+     
     folder = UPLOADS / claim["claim_id"]
     folder.mkdir(parents=True, exist_ok=True)
     doc_meta, hashes = [], []
@@ -185,8 +185,8 @@ def process_and_save(claim, docs, actor):
     fdb.notify(claim["user_id"], claim["claim_id"],
                f"Claim {claim['claim_id']} submitted - status: {status}")
 
-    # ---- email: submission confirmation to the owner (background thread,
-    # never blocks the request; copies route to the demo inbox)
+     
+     
     from .email_service import notify_claim_submitted
     notify_claim_submitted(
         claim["user_id"], claim["claim_id"],
@@ -210,7 +210,7 @@ def update_claim(cid, updates, event=None, actor="system"):
     fdb.set_doc("claims", cid, doc)
 
 
-# ------------------------------------------------------------------ reporting
+     
 def build_report(claim):
     """Downloadable per-claim report (req xliv): every prediction,
     confidence score, rule result, contradiction and reviewer action."""

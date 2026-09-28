@@ -187,7 +187,7 @@
   'Manual Review': 'review'
 } %}
 
-{# Find highest probability if top was not supplied #}
+  
 {% if not top and probs %}
   {% set top_class = namespace(name='') %}
   {% set top_value = namespace(value=-1) %}

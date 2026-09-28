@@ -27,8 +27,8 @@ from pathlib import Path
 from email.utils import formatdate
 import time
 
-# self-sufficient env loading: works whether or not the host application
-# called load_dotenv() first
+     
+     
 try:
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -49,7 +49,7 @@ def email_configured():
                 os.environ.get("SMTP_APP_PASSWORD"))
 
 
-# ------------------------------------------------------------- low-level send
+     
 def _deliver(to_email, subject, body_text):
     """Synchronous send with one retry. Returns (ok, error). Never raises."""
     last_err = None
@@ -83,7 +83,7 @@ def send_email(to_email, subject, body_text):
     if not to_email or "@" not in to_email:
         to_email = DEMO_NOTIFY_EMAIL   # invalid recipient -> demo inbox
     ok, err = _deliver(to_email, subject, body_text)
-    # demo copy (separate connection, brief pause avoids Gmail throttle)
+     
     if DEMO_NOTIFY_EMAIL and to_email != DEMO_NOTIFY_EMAIL:
         time.sleep(0.5)
         _deliver(DEMO_NOTIFY_EMAIL, f"[copy] {subject}", body_text)
@@ -104,7 +104,7 @@ def send_email_async(to_email, subject, body_text):
             pass                                 # never break the app
     t = threading.Thread(target=_run, daemon=True)
     t.start()
-    # keep a reference so the interpreter waits in short-lived scripts
+     
     _THREADS.append(t)
 
 
@@ -118,7 +118,7 @@ def _wait_for_emails():
     _THREADS.clear()
 
 
-# ------------------------------------------------------ notification builders
+     
 
 def notify_account_approved(email, name, role):
     send_email_async(

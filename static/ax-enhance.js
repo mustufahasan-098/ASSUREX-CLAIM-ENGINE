@@ -61,7 +61,7 @@
       ctx.arc(p.x, p.y, p.r, 0, 6.29);
       ctx.fillStyle = 'rgba(140,160,255,.35)';
       ctx.fill();
-      // connections
+     
       for (var j = i + 1; j < parts.length; j++) {
         var q = parts[j];
         var dx = p.x - q.x, dy = p.y - q.y;

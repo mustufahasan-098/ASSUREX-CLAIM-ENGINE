@@ -53,7 +53,7 @@ STYLES = {
     "gray": ((233, 236, 239), (73, 80, 87)),
 }
 
-# large status pills: solid saturated fill + white text for 224x224 salience
+     
 PILL_STYLES = {
     "green": ((21, 122, 62), WHITE),
     "red": ((184, 32, 32), WHITE),
@@ -117,7 +117,7 @@ def render_card(claim, policy, bg=(255, 255, 255), pad=26, bold_values=False,
 
     x0, x1 = pad, BASE_W - pad
 
-    # ---- header + claim id
+     
     d.rectangle([0, 0, BASE_W, 56], fill=HEADER)
     d.text((x0, 14), "ASSUREX  CLAIM SUMMARY CARD", font=f_title, fill=WHITE)
     y = 72
@@ -159,7 +159,7 @@ def render_card(claim, policy, bg=(255, 255, 255), pad=26, bold_values=False,
         d.text((x0 + (x1 - x0 - tw) / 2, y + 10), text, font=f_pill, fill=fg)
         y += 56
 
-    # ---- factual claim data
+     
     purchase = parse_date(claim["purchase_date"])
     fault = parse_date(claim["fault_date"])
     claim_d = parse_date(claim["claim_date"])
@@ -250,7 +250,7 @@ def render_card(claim, policy, bg=(255, 255, 255), pad=26, bold_values=False,
         or (repair_d and purchase and repair_d < purchase))
     row("Date Check", chip=("red", "CONFLICT") if conflict else ("green", "CONSISTENT"))
 
-    # ---- validation checks: high-salience factual findings (v2)
+     
     y += 10
     d.text((x0, y), "VALIDATION CHECKS", font=f_section, fill=MUTED)
     y += 36
@@ -261,7 +261,7 @@ def render_card(claim, policy, bg=(255, 255, 255), pad=26, bold_values=False,
         for sev, text in flags[:4]:
             big_pill(text, "red" if sev == "hard_fail" else "amber")
 
-    # ---- supporting documents
+     
     y += 12
     d.text((x0, y), "SUPPORTING DOCUMENTS", font=f_section, fill=MUTED)
     y += 34
@@ -280,7 +280,7 @@ def render_card(claim, policy, bg=(255, 255, 255), pad=26, bold_values=False,
         d.text((cx + 170, cy), text, font=f_stat, fill=color)
     y += 3 * 34 + 10
 
-    # ---- bottom banner
+     
     missing = [name for key, name in DOCS
                if key in mandatory and not to_bool(claim.get(f"has_{key}", False))]
     if missing:
@@ -330,8 +330,8 @@ def generate():
             outdir.mkdir(parents=True, exist_ok=True)
             cid = claim["claim_id"]
 
-            # self-test: pill findings must agree with the rule-engine label.
-            # 'Valid Claim' <=> zero factual flags (mirrors evaluate_claim).
+     
+     
             flags = factual_flags(claim, policy)
             if (claim["label"] == "Valid Claim") != (len(flags) == 0):
                 raise SystemExit(
@@ -339,12 +339,12 @@ def generate():
                     f"but flags={flags}. factual_flags has drifted from "
                     "evaluate_claim - fix before training TM.")
 
-            # variation 1 - canonical style (PNG)
+     
             render_card(claim, policy).save(outdir / f"{cid}_v1.png")
             index_rows.append([cid, f"{cid}_v1.png", 1, split, claim["label"]])
             counts[split][claim["label"]] += 1
 
-            # variation 2 - randomised style (JPEG), training split only
+     
             if split == "train":
                 rng = random.Random(f"{SEED}:{cid}")
                 st = variant_style(rng)

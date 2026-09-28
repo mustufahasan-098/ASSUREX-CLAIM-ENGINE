@@ -1,6 +1,6 @@
-// AssureX evaluation overlay - staged loading animation while the claim
-// runs through the pipeline. Steps advance on a timer; the overlay hides
-// automatically when the page navigates to the result.
+     
+     
+     
 (function () {
   var overlay = document.getElementById('evalOverlay');
   if (!overlay) return;
@@ -30,7 +30,7 @@
     advance();
   };
 
-  // safety: if navigation somehow fails, never trap the user
+     
   window.addEventListener('pageshow', function () {
     overlay.classList.remove('ax-on');
     if (timer) clearTimeout(timer);

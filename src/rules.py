@@ -43,8 +43,8 @@ def evaluate_claim(claim, policy):
     out = {"label": None, "contradictions": [], "hard_fails": [],
            "review_flags": [], "warnings": [], "reasons": []}
 
-    # 1 ---- contradictions -> manual review (checked first: unreliable data
-    # cannot be trusted to auto-decide anything, even an invalid-looking claim)
+     
+     
     if claim_d and purchase and claim_d < purchase:
         out["contradictions"].append("Claim submitted before purchase date")
     if fault and purchase and fault < purchase:
@@ -58,7 +58,7 @@ def evaluate_claim(claim, policy):
         out["reasons"] = ["Contradictory claim data requires human verification"] + out["contradictions"]
         return out
 
-    # 2 ---- hard failures -> invalid
+     
     if d["warranty_expired"] and not d["within_grace"]:
         out["hard_fails"].append("Warranty expired before the fault date")
     if claim.get("fault_category") in policy["excluded_faults"]:
@@ -80,14 +80,14 @@ def evaluate_claim(claim, policy):
         out["reasons"] = ["One or more hard-fail warranty rules were violated"] + out["hard_fails"]
         return out
 
-    # 2.5 ---- informational warnings (never change the label)
+     
     price = float(claim.get("purchase_price") or 0)
     if price >= int(policy.get("expensive_item_threshold", 10**9)):
         out["warnings"].append("High-value item - extra documentation check advised")
     if d["warranty_days_remaining"] is not None and d["warranty_days_remaining"] <= 60:
         out["warnings"].append("Fault occurred near the end of the warranty period")
 
-    # 3 ---- manual-review triggers
+     
     if d["within_grace"]:
         out["review_flags"].append("Fault occurred after expiry but inside the grace period")
     if not to_bool(claim.get("serial_match", True)):
@@ -106,7 +106,7 @@ def evaluate_claim(claim, policy):
         out["reasons"] = ["Claim requires manual verification"] + out["review_flags"]
         return out
 
-    # 4 ---- all rules passed
+     
     out["label"] = VALID
     out["reasons"] = ["All warranty rules passed with complete documentation"]
     return out

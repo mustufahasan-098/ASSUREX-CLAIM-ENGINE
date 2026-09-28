@@ -1,4 +1,4 @@
-// AssureX Help Assistant - chat widget
+     
 function toggleChat() {
   var p = document.getElementById('axChatPanel');
   p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
@@ -15,8 +15,8 @@ function addMsg(role, text) {
   var d = document.createElement('div');
   d.className = 'ax-chat-msg ax-chat-msg--' + role;
 
-  // format: **bold** → <b>, *italic* → <em>, `code` → <code>,
-  // - item → <li>, line breaks → <br>. Escape HTML first for safety.
+     
+     
   var escaped = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -27,7 +27,7 @@ function addMsg(role, text) {
     .replace(/`(.+?)`/g, '<code>$1</code>')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
     .replace(/\n/g, '<br>');
-  // wrap consecutive <li> in <ul>
+     
   formatted = formatted.replace(/(<li>.*?<\/li>(<br>)?)+/g, function (m) {
     return '<ul>' + m.replace(/<br>/g, '') + '</ul>';
   });
@@ -52,7 +52,7 @@ function sendChat(ev) {
   msgs.appendChild(loading);
   msgs.scrollTop = msgs.scrollTop = msgs.scrollHeight;
 
-  // CSRF token from the meta tag (same protection as all forms)
+     
   var tokenMeta = document.querySelector('meta[name="csrf-token"]');
   var token = tokenMeta ? tokenMeta.content : '';
 

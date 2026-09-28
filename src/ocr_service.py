@@ -22,7 +22,7 @@ from PIL import ImageStat
 
 from .features import parse_date
 
-# ------------------------------------------------------------------ engine
+     
 TESSERACT_FALLBACKS = [
     r"C:\Program Files\Tesseract-OCR\tesseract.exe",
     r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
@@ -54,7 +54,7 @@ def _get_pytesseract():
     return None, _ENGINE_ERR
 
 
-# ------------------------------------------------------------ brand lexicon
+     
 BRAND_KEYWORDS = {
     "Samsung": ["samsung", "galaxy"],
     "Sony": ["sony", "bravia", "playstation"],
@@ -87,7 +87,7 @@ def _word_in(word, text):
     return re.search(rf"\b{re.escape(word)}\b", text) is not None
 
 
-# ---------------------------------------------------------------- extract
+     
 def extract_receipt_info(image):
     """OCR a receipt image and return structured fields + quality stats."""
     pyt, err = _get_pytesseract()
@@ -129,7 +129,7 @@ def extract_receipt_info(image):
     }
 
 
-# ---------------------------------------------------------------- quality
+     
 def image_quality(image):
     """Basic evidence-quality gate for uploaded photos (resolution +
     exposure). Catches dark/tiny/overexposed evidence before review."""
@@ -149,7 +149,7 @@ def image_quality(image):
     return {"ok": ok, "notes": notes, "size": f"{w}x{h}"}
 
 
-# ---------------------------------------------------------------- verify
+     
 def verify_against_product(info, product):
     """Cross-check extracted receipt fields against the registered product
     (SRS req vii + xxvii). Verdict: verified | mismatch | inconclusive."""
@@ -165,7 +165,7 @@ def verify_against_product(info, product):
 
     low = info.get("_text", "")
 
-    # ---- 1. brand cross-check (the iPhone-for-Samsung detector)
+     
     found = info.get("brands") or []
     brand_match = False
     if found:
@@ -179,17 +179,17 @@ def verify_against_product(info, product):
         brand_match = True
         notes.append(f"Brand '{p_brand}' found on receipt")
 
-    # ---- 2. model mention
+     
     if p_model and p_model in low:
         notes.append(f"Model '{product.get('model')}' appears on receipt")
 
-    # ---- 3. serial cross-check (req xxvii)
+     
     serial_match = False
     serials = info.get("serials") or []
     if p_serial and serials:
         def serial_close(a, b):
-            # OCR confuses O/0, I/1, S/5, B/8 - compare with a normalised
-            # alphabet and a similarity threshold instead of exact equality.
+     
+     
             norm = lambda s: s.upper().replace("O", "0").replace("I", "1") \
                               .replace("S", "5").replace("B", "8")
             if norm(a) == norm(b):
@@ -202,7 +202,7 @@ def verify_against_product(info, product):
             mismatches.append("Serial on receipt does not match the "
                               "registered product serial")
 
-    # ---- 4. purchase-date proximity
+     
     if p_date:
         best = None
         for d in info.get("dates", []):
@@ -217,13 +217,13 @@ def verify_against_product(info, product):
                 notes.append("Receipt date is far from the registered "
                              "purchase date")
 
-    # ---- quality annotation
+     
     if info.get("word_count", 0) < 8:
         notes.append("Very little text detected - receipt may be "
                      "low quality or not a receipt")
 
-        # a serial-only mismatch with matching brand is suspicious but not
-    # conclusive - route it to review rather than failing outright
+     
+     
     soft_serial = (len(mismatches) == 1
                    and mismatches[0].startswith("Serial on receipt")
                    and (brand_match or serial_match))

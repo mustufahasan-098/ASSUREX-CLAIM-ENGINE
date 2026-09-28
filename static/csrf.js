@@ -1,6 +1,6 @@
-// AssureX CSRF helper: injects the token into every form on the page.
-// Forms rendered server-side get the token via the meta tag; this runs
-// once per page load, before any submit can happen.
+     
+     
+     
 (function () {
   var meta = document.querySelector('meta[name="csrf-token"]');
   if (!meta) return;

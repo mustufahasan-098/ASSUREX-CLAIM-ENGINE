@@ -77,7 +77,7 @@ def main():
     model = TMModel(MODEL_PATH, LABELS_PATH)
     print(f"Labels loaded: {model.labels}")
 
-    # calibrate input normalisation on labelled TRAIN cards (never val/test)
+     
     train = collect("train")
     sample = random.Random(42).sample(train, min(40, len(train)))
     opened = []
