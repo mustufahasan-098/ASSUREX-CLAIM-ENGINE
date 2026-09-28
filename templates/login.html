@@ -114,10 +114,10 @@
       New to AssureX? <a href="{{ url_for('register') }}">Create an account</a></p>
 
     <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--stroke-soft);">
-      <div class="ax-label-lg" style="font-size:.64rem;">Quick demo access</div>
+      <div class="ax-label-lg" style="font-size:.64rem;">Quick demo access — all four roles</div>
       <div class="ax-demo-row2" onclick="fillLogin('admin@assurex.com','Admin@123')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
-        <span><span class="ax-demo-role">Administrator</span> — analytics &amp; full control</span>
+        <span><span class="ax-demo-role">Administrator</span> — analytics, approvals, entity links</span>
         <svg class="ax-demo-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
       </div>
       <div class="ax-demo-row2" onclick="fillLogin('reviewer@assurex.com','Reviewer@123')">
@@ -127,7 +127,12 @@
       </div>
       <div class="ax-demo-row2" onclick="fillLogin('demo@assurex.com','Demo@123')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-        <span><span class="ax-demo-role">Customer</span> — products &amp; claims</span>
+        <span><span class="ax-demo-role">Customer</span> — products, claims, repair booking</span>
+        <svg class="ax-demo-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="ax-demo-row2" onclick="fillLogin('service@assurex.com','Service@123')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <span><span class="ax-demo-role">Service Center</span> — service desk, file for customers</span>
         <svg class="ax-demo-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
       </div>
     </div>
