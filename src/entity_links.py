@@ -50,9 +50,9 @@ def build_links(claims):
             continue
         for ent in _claim_entities(c):
             by_entity[ent].add(cid)
-    # owner-links alone don't indicate a syndicate (same customer, multiple
-    # claims is expected behavior) - only keep owner links when they pair
-    # with a DIFFERENT entity type shared across users
+     
+     
+     
     return {ent: sorted(ids) for ent, ids in by_entity.items()
             if len(ids) >= 2 and ent[0] != "owner"}
 
@@ -67,7 +67,7 @@ def build_clusters(claims, min_cluster=3, min_link_types=2):
     if not links:
         return []
 
-    # union-find over claim ids
+     
     parent = {}
 
     def find(x):
@@ -95,7 +95,7 @@ def build_clusters(claims, min_cluster=3, min_link_types=2):
     for members in groups.values():
         if len(members) < min_cluster:
             continue
-        # entity types shared inside this group
+     
         shared = {ent: ids for ent, ids in links.items()
                   if set(ids) & members}
         types = {ent[0] for ent in shared}

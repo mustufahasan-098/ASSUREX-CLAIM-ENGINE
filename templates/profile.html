@@ -5,7 +5,7 @@
 {{ ui.hero("USER", "My Profile", "View and update your account details") }}
 <div class="ax-grid-2">
   <div class="ax-form-card">
-    <h4>✏️ Update profile</h4>
+    <h4> Update profile</h4>
     <form method="post">
       <div class="ax-field"><label>Full name *</label>
         <input class="ax-input" name="name" required value="{{ current_user.name }}"></div>
@@ -19,7 +19,7 @@
     </form>
   </div>
   <div class="ax-card">
-    <h4>🔒 Account security</h4>
+    <h4> Account security</h4>
     {{ ui.kv_grid([
       ("User ID (email)", current_user.email),
       ("Role", current_user.role),

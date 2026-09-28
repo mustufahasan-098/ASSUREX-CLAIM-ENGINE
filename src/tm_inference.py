@@ -32,9 +32,9 @@ class TMModel:
         raw = [l.strip() for l in
                Path(labels_path).read_text(encoding="utf-8").splitlines()
                if l.strip()]
-        # Teachable Machine exports labels with an index prefix,
-        # e.g. "0 Valid Claim". Strip it so labels match the dataset
-        # class names exactly.
+     
+     
+     
         self.labels = [l.split(" ", 1)[1] if l[0].isdigit() and " " in l else l
                        for l in raw]
         self.mode = "mobilenet"   # (pixel / 127.5) - 1, TM's documented scheme
@@ -55,9 +55,9 @@ class TMModel:
 
     def _prepare(self, pil_image):
         img = pil_image.convert("RGB")
-        # Teachable Machine center-crops training images to a square before
-        # resizing to 224x224. Inference must do exactly the same, or the
-        # model is shown distorted images it never trained on.
+     
+     
+     
         w, h = img.size
         s = min(w, h)
         left, top = (w - s) // 2, (h - s) // 2
@@ -68,11 +68,11 @@ class TMModel:
             arr = arr / 127.5 - 1.0
         elif self.mode == "unit":
             arr = arr / 255.0
-        # "raw" keeps 0-255 unchanged
+     
         dt = self.input_details["dtype"]
         if dt in (np.float32, np.float16):
             return arr.reshape(1, self.INPUT_SIZE, self.INPUT_SIZE, 3).astype(dt)
-        # quantized input: use the model's own quantisation parameters
+     
         scale, zero = self.input_details.get("quantization") or (1.0, 0)
         q = arr / scale + zero if scale else arr
         info = np.iinfo(dt)
@@ -85,8 +85,8 @@ class TMModel:
         self.interp.invoke()
         out = np.asarray(
             self.interp.get_tensor(self.output_details["index"])).flatten()
-        # guard: a labels file that doesn't match the model (stale export or
-        # failed copy) produces silent garbage - fail loudly instead
+     
+     
         if len(self.labels) != len(out):
             raise RuntimeError(
                 f"labels.txt has {len(self.labels)} classes but the model outputs "

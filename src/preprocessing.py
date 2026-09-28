@@ -23,15 +23,15 @@ import pandas as pd
 
 from .features import compute_derived, to_bool
 
-# Model-input price clamp (train/serve skew guard): the synthetic training
-# dataset sampled purchase_price uniformly in [80, 3000]; live
-# registrations carry realistic market prices (e.g. Rs 90,000 phones).
-# Values far outside the training range make the tree ensemble hedge
-# unnaturally, so the MODEL FEATURE is winsorized to the training range.
-# This is a no-op for all training data (already in range) and only
-# stabilizes live inference. The fraud layer reads the RAW price
-# separately (realistic reference prices) - each layer gets the input
-# it was designed for.
+     
+     
+     
+     
+     
+     
+     
+     
+     
 MODEL_PRICE_RANGE = (80.0, 3000.0)
 
 
@@ -105,19 +105,19 @@ def build_model_features(claim, policies):
     fault = claim.get("fault_category") or "unknown"
 
     features = {
-        # ---- derived numerics (NaN when dates are missing -> imputed)
+     
         "product_age_days": _f(derived["product_age_days"]),
         "warranty_days_remaining": _f(derived["warranty_days_remaining"]),
         "days_to_report": _f(derived["days_to_report"]),
         "missing_docs_count": float(derived["missing_docs_count"]),
-        # ---- raw numerics
+     
         "warranty_months": _num_or_nan(claim.get("warranty_months"), int),
         "extended_months": _num_or_nan(claim.get("extended_months"), int),
         "purchase_price": _clamp_price(
             _num_or_nan(claim.get("purchase_price"), float)),
         "repair_count": _num_or_nan(claim.get("repair_count"), int),
         "prior_claim_count": _num_or_nan(claim.get("prior_claim_count"), int),
-        # ---- booleans as 0/1
+     
         "authorized_repair": int(to_bool(claim.get("authorized_repair", True))),
         "serial_match": int(to_bool(claim.get("serial_match", True))),
         "duplicate_invoice": int(to_bool(claim.get("duplicate_invoice", False))),
@@ -130,7 +130,7 @@ def build_model_features(claim, policies):
         "has_serial_evidence": int(to_bool(claim.get("has_serial_evidence", False))),
         "has_fault_evidence": int(to_bool(claim.get("has_fault_evidence", False))),
         "has_repair_report": int(to_bool(claim.get("has_repair_report", False))),
-        # ---- categoricals (encoded inside the sklearn pipeline)
+     
         "product_category": category,
         "brand": claim.get("brand") or "Unknown",
         "fault_category": fault,

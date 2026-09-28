@@ -1,13 +1,36 @@
 {% extends "base.html" %}
 {% import "macros.html" as ui %}
 {% block title %}New Claim — AssureX{% endblock %}
+
+{% macro icon_arrow_right() -%}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+{%- endmacro %}
+
+{% macro icon_arrow_left() -%}
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+{%- endmacro %}
+
+{% macro icon_plus() -%}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+{%- endmacro %}
+
+{% macro icon_x() -%}
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+{%- endmacro %}
+
+{% macro icon_box() -%}
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+{%- endmacro %}
+
 {% block content %}
-{{ ui.hero("📝", "New Warranty Claim", "Upload evidence → describe the fault → both AI models evaluate your claim in seconds") }}
+{{ ui.hero("📝", "New Warranty Claim", "Upload evidence, describe the fault — both AI models evaluate your claim in seconds") }}
 
 {% if step == "no_products" %}
   {{ ui.empty_state("📦", "No products registered", "Register a product first — claims are always linked to a registered product.") }}
   <div style="text-align:center; margin-top:14px;">
-    <a class="ax-btn ax-btn--primary" href="{{ url_for('products') }}">📦 Go to My Products</a>
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('products') }}" style="display:inline-flex; align-items:center; gap:8px;">
+      {{ icon_box() }} Go to My Products
+    </a>
   </div>
 
 {% elif step == "select" %}
@@ -20,19 +43,23 @@
         <div class="ax-pick-inner">
           <div class="ax-pick-title">{{ pick.p.name }}</div>
           <div class="ax-pick-sub">{{ pick.p.brand }} {{ pick.p.model }} · {{ pick.p.product_category }}</div>
-          <div>{% if pick.expired %}{{ ui.badge("⛔ Warranty expired", "invalid") }}{% elif pick.expiring %}{{ ui.badge("⏰ Expiring in " ~ pick.left ~ " days", "review") }}{% else %}{{ ui.badge("✅ " ~ pick.left ~ " days left", "valid") }}{% endif %}</div>
+          <div>{% if pick.expired %}{{ ui.badge("Warranty expired", "invalid") }}{% elif pick.expiring %}{{ ui.badge("Expiring in " ~ pick.left ~ " days", "review") }}{% else %}{{ ui.badge(pick.left ~ " days left", "valid") }}{% endif %}</div>
         </div>
       </label>
       {% endfor %}
     </div>
     <div style="margin-top:16px;">
-      <button class="ax-btn ax-btn--primary" type="submit">Continue →</button>
+      <button class="ax-btn ax-btn--primary" type="submit" style="display:inline-flex; align-items:center; gap:8px;">
+        Continue {{ icon_arrow_right() }}
+      </button>
     </div>
   </form>
 
 {% else %}
   {{ ui.alert("Selected: " ~ P.name ~ " — " ~ P.brand ~ " " ~ P.model ~ " · warranty " ~ ("EXPIRED" if left < 0 else left ~ " days left, ends " ~ expiry), "invalid" if left < 0 else "info") }}
-  <a class="ax-btn ax-btn--sm" href="{{ url_for('new_claim') }}">← change product</a>
+  <a class="ax-btn ax-btn--sm" href="{{ url_for('new_claim') }}" style="display:inline-flex; align-items:center; gap:6px;">
+    {{ icon_arrow_left() }} Change product
+  </a>
 
   {{ ui.section("📎", "1 · Supporting documents") }}
   <div class="ax-card">
@@ -47,41 +74,45 @@
         <label>Document type</label>
         <select class="ax-input" name="dtype">{% for t in doc_types %}<option value="{{ t }}">{{ t.replace('_',' ')|title }}</option>{% endfor %}</select>
       </div>
-      <button class="ax-btn ax-btn--primary" type="submit">➕ Upload &amp; scan</button>
+      <button class="ax-btn ax-btn--primary" type="submit" style="display:inline-flex; align-items:center; gap:8px;">
+        {{ icon_plus() }} Upload &amp; scan
+      </button>
     </form>
   </div>
 
   {% if staged %}
     {% for s in staged %}
     <div class="ax-doc-item">
-      <span>📎 <b>{{ s.type.replace('_',' ')|title }}</b> — {{ s.name }} · <code>{{ s.sha256[:14] }}…</code> · {{ "%.0f"|format(s.size / 1024) }} KB</span>
+      <span><b>{{ s.type.replace('_',' ')|title }}</b> — {{ s.name }} · <code>{{ s.sha256[:14] }}…</code> · {{ "%.0f"|format(s.size / 1024) }} KB</span>
       <form method="post" action="{{ url_for('new_claim_unstage') }}">
         <input type="hidden" name="product_id" value="{{ P.product_id }}">
         <input type="hidden" name="index" value="{{ loop.index0 }}">
-        <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit">✕ Remove</button>
+        <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit" title="Remove document">
+          {{ icon_x() }} Remove
+        </button>
       </form>
     </div>
     {% endfor %}
   {% endif %}
 
   {% if ocr and ocr.available %}
-    {{ ui.alert("🔍 OCR extraction — dates: " ~ (ocr.dates|join(", ") or "none") ~ " · invoices: " ~ (ocr.invoice_numbers|join(", ") or "none") ~ " · serials: " ~ (ocr.serial_numbers|join(", ") or "none") ~ " · amounts: " ~ (ocr.amounts|join(", ") or "none") ~ ". VERIFY these against the form below before submitting (req vii).", "info") }}
+    {{ ui.alert("OCR extraction — dates: " ~ (ocr.dates|join(", ") or "none") ~ " · invoices: " ~ (ocr.invoice_numbers|join(", ") or "none") ~ " · serials: " ~ (ocr.serials|join(", ") or "none") ~ " · amounts: " ~ (ocr.amounts|join(", ") or "none") ~ ". Verify these against the form below before submitting (req vii).", "info") }}
   {% elif ocr and not ocr.available %}
     {{ ui.alert(ocr.note, "review") }}
   {% endif %}
 
   {% if ocr_verify and ocr_verify.verdict == 'verified' %}
-    {{ ui.alert("✅ Receipt VERIFIED against registered product — " ~ ocr_verify.summary, "valid") }}
+    {{ ui.alert("Receipt VERIFIED against registered product — " ~ ocr_verify.summary, "valid") }}
   {% elif ocr_verify and ocr_verify.verdict == 'mismatch' %}
-    {{ ui.alert("⛔ Receipt does NOT match the registered product — " ~ ocr_verify.summary ~ " — the claim will be routed to manual review.", "invalid") }}
+    {{ ui.alert("Receipt does NOT match the registered product — " ~ ocr_verify.summary ~ " — the claim will be routed to manual review.", "invalid") }}
   {% elif ocr_verify and ocr_verify.verdict == 'inconclusive' %}
-    {{ ui.alert("ℹ️ Receipt could not be fully verified — " ~ ocr_verify.summary, "review") }}
+    {{ ui.alert("Receipt could not be fully verified — " ~ ocr_verify.summary, "review") }}
   {% endif %}
 
   {% if missing %}
     {{ ui.alert("Missing mandatory documents: " ~ missing|join(", ") ~ " — the claim will be routed to manual review without them.", "review") }}
   {% else %}
-    {{ ui.alert("All mandatory documents attached ✅", "valid") }}
+    {{ ui.alert("All mandatory documents attached.", "valid") }}
   {% endif %}
 
   {{ ui.section("✍️", "2 · Claim details") }}
@@ -93,10 +124,10 @@
         <div class="ax-field">
           <label>Fault type</label>
           <select class="ax-input" name="fault_category" required>
-            <optgroup label="✅ Covered faults">
+            <optgroup label="Covered faults">
               {% for f in policy.covered_faults %}<option value="{{ f }}">{{ f.replace('_',' ') }}</option>{% endfor %}
             </optgroup>
-            <optgroup label="⛔ Excluded (claim will be invalid)">
+            <optgroup label="Excluded (claim will be invalid)">
               {% for f in policy.excluded_faults %}<option value="{{ f }}">{{ f.replace('_',' ') }}</option>{% endfor %}
             </optgroup>
           </select>
@@ -122,10 +153,10 @@
       </div>
       <div class="ax-field">
         <label>Fault description</label>
-        <textarea class="ax-input" name="description" placeholder="Describe what happened…"></textarea>
+        <textarea class="ax-input" name="description" placeholder="Describe what happened"></textarea>
       </div>
-      {{ ui.alert("💡 Live checks: date contradictions (claim before purchase, fault after claim, repair before purchase) and serial mismatches are detected automatically.", "info") }}
-      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit" onclick="showEvalOverlay()">🚀 Evaluate &amp; Submit Claim</button>
+      {{ ui.alert("Live checks: date contradictions (claim before purchase, fault after claim, repair before purchase) and serial mismatches are detected automatically.", "info") }}
+      <button class="ax-btn ax-btn--primary ax-btn--block" type="submit" onclick="showEvalOverlay()">Evaluate &amp; Submit Claim</button>
     </form>
   </div>
 {% endif %}

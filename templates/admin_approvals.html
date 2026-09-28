@@ -1,22 +1,56 @@
 {% extends "base.html" %}
 {% import "macros.html" as ui %}
 {% block title %}Account Approvals — AssureX{% endblock %}
+
+{% macro icon_shield() -%}
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+{%- endmacro %}
+
+{% macro icon_user() -%}
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+{%- endmacro %}
+
+{% macro icon_check() -%}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+{%- endmacro %}
+
+{% macro icon_x() -%}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+{%- endmacro %}
+
+{% macro icon_clock() -%}
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+{%- endmacro %}
+
+{% macro icon_inbox() -%}
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+{%- endmacro %}
+
 {% block content %}
-{{ ui.hero("🛡️", "Account Approvals", "Privileged roles (reviewer, service center) require administrator activation before access") }}
+{{ ui.hero("🛡️", "Account Approvals", "Privileged role registrations require administrator activation before access is granted") }}
 
 {{ ui.stat_row(stats) }}
 
 {% if not users %}
-  {{ ui.empty_state("✅", "No pending requests", "All privileged account requests have been processed. New reviewer and service-center registrations will appear here.") }}
+  {{ ui.empty_state("📭", "No pending requests", "New reviewer and service-center registrations will appear here for activation.") }}
 {% else %}
+
 {{ ui.section("⏳", "Pending accounts") }}
+
 {% for u in users %}
 <div class="ax-card">
   <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;">
     <div>
-      <b>{{ u.name }}</b>
-      <div style="font-size:.84rem; color:var(--t-mid);">{{ u.email }}</div>
-      <div style="margin-top:8px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:40px; height:40px; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; background:var(--acc-tint); border:1px solid var(--acc-stroke); color:var(--acc-hi);">
+          {{ icon_user() }}
+        </span>
+        <div>
+          <b>{{ u.name }}</b>
+          <div style="font-size:.84rem; color:var(--t-mid);">{{ u.email }}</div>
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
         <span class="ax-badge ax-badge--review">Requested: {{ u.role.replace('_',' ')|title }}</span>
         <span class="ax-badge ax-badge--neutral">Registered {{ u.created_at }}</span>
       </div>
@@ -24,11 +58,15 @@
     <div style="display:flex; gap:10px;">
       <form method="post" action="{{ url_for('admin_approval_action', email=u.email) }}">
         <input type="hidden" name="action" value="approve">
-        <button class="ax-btn ax-btn--primary" type="submit">✅ Approve</button>
+        <button class="ax-btn ax-btn--primary" type="submit">
+          {{ icon_check() }} Approve &amp; Notify
+        </button>
       </form>
       <form method="post" action="{{ url_for('admin_approval_action', email=u.email) }}">
         <input type="hidden" name="action" value="reject">
-        <button class="ax-btn ax-btn--danger" type="submit">⛔ Reject</button>
+        <button class="ax-btn ax-btn--danger" type="submit">
+          {{ icon_x() }} Reject
+        </button>
       </form>
     </div>
   </div>

@@ -1,0 +1,12 @@
+{
+  "description": "Sample claims demonstrating each evaluation scenario. Submit these through the app or via demo_valid_claim.py to reproduce.",
+  "samples": [
+    {"scenario": "valid_claim", "product_category": "Electronics", "brand": "Samsung", "model": "Galaxy S22", "purchase_days_ago": 200, "warranty_months": 24, "fault_days_ago": 1, "fault_category": "screen_defect", "documents": ["receipt", "warranty_card", "fault_evidence"], "expected": "Likely Valid"},
+    {"scenario": "expired_warranty", "product_category": "Power Tools", "brand": "Bosch", "model": "GSR 18V", "purchase_days_ago": 900, "warranty_months": 18, "fault_days_ago": 5, "fault_category": "motor_failure", "documents": [], "expected": "Likely Invalid"},
+    {"scenario": "excluded_fault", "product_category": "Electronics", "purchase_days_ago": 200, "warranty_months": 24, "fault_days_ago": 3, "fault_category": "liquid_damage", "documents": ["receipt", "warranty_card", "fault_evidence"], "expected": "Likely Invalid"},
+    {"scenario": "missing_documents", "product_category": "Home Appliances", "purchase_days_ago": 150, "warranty_months": 12, "fault_days_ago": 4, "fault_category": "cooling_failure", "documents": [], "serial_match": false, "expected": "Manual Review Required"},
+    {"scenario": "unauthorized_repair", "product_category": "Electronics", "purchase_days_ago": 300, "warranty_months": 24, "fault_days_ago": 7, "fault_category": "screen_defect", "repair_count": 1, "authorized_repair": false, "expected": "Likely Invalid"},
+    {"scenario": "contradiction", "purchase_days_ago": 200, "claim_before_purchase": true, "expected": "Manual Review Required"},
+    {"scenario": "duplicate_fraud", "note": "Submit the same receipt file + invoice twice", "expected": "Manual Review Required + fraud score >= 60"}
+  ]
+}

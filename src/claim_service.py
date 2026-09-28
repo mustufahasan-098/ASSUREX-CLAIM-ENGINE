@@ -184,6 +184,14 @@ def process_and_save(claim, docs, actor):
                    "status": status})
     fdb.notify(claim["user_id"], claim["claim_id"],
                f"Claim {claim['claim_id']} submitted - status: {status}")
+
+    # ---- email: submission confirmation to the owner (background thread,
+    # never blocks the request; copies route to the demo inbox)
+    from .email_service import notify_claim_submitted
+    notify_claim_submitted(
+        claim["user_id"], claim["claim_id"],
+        f"{claim['brand']} {claim['model']}", final, status)
+
     return {**res, "claim_id": claim["claim_id"], "status": status,
             "duplicates": dup}
 
@@ -216,7 +224,7 @@ def build_report(claim):
         f"- Product: {claim.get('brand', '')} {claim.get('model', '')} "
         f"({claim.get('product_category', '')})",
         f"- Serial: {claim.get('serial_number', '')} | "
-        f"Invoice: {claim.get('invoice_number', '')}",
+        f"Invoice: {claim.get('invoice_number', '')})",
         f"- Purchase: {claim.get('purchase_date', '')} | "
         f"Fault: {claim.get('fault_date', '')} "
         f"({claim.get('fault_category', '')})",

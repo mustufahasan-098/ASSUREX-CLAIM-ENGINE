@@ -1,11 +1,20 @@
 {% extends "base.html" %}
 {% import "macros.html" as ui %}
 {% block title %}Claims — AssureX{% endblock %}
+
+{% macro icon_search() -%}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+{%- endmacro %}
+
+{% macro icon_download() -%}
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+{%- endmacro %}
+
 {% block content %}
 {{ ui.hero("📁", "My Claims" if g.user.role in ("customer", "service_center") else "All Claims", "Search, filter, and track every claim through its lifecycle") }}
 
 <details class="ax-details" open>
-  <summary>🔎 Filters</summary>
+  <summary style="gap:8px;">{{ icon_search() }} Filters</summary>
   <div class="ax-details-body">
     <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
       <div class="ax-field" style="flex:1; min-width:150px; margin:0;"><label>Status</label>
@@ -15,16 +24,23 @@
       <div class="ax-field" style="flex:1; min-width:150px; margin:0;"><label>Category</label>
         <select class="ax-input" name="category"><option {% if cat_f == "All" %}selected{% endif %}>All</option>{% for c in categories %}<option {% if c == cat_f %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
       <div class="ax-field" style="flex:2; min-width:180px; margin:0;"><label>Search</label>
-        <input class="ax-input" name="q" value="{{ q }}" placeholder="Claim ID / serial / invoice"></div>
+        <div style="position:relative;">
+          <span style="position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--t-low); pointer-events:none; display:inline-flex;">
+            {{ icon_search() }}
+          </span>
+          <input class="ax-input" name="q" value="{{ q }}" placeholder="Claim ID / serial / invoice" style="padding-left:40px;">
+        </div></div>
       <button class="ax-btn ax-btn--primary" type="submit">Filter</button>
     </form>
   </div>
 </details>
+
 <p style="font-size:.82rem; color:var(--t-low); margin:10px 0;">Showing {{ claims|length }} of {{ total }} claims</p>
 
 {% if not claims %}
   {{ ui.empty_state("🗂️", "No claims found", "Adjust the filters, or submit a claim from the New Claim page.") }}
 {% endif %}
+
 {% for c in claims %}
 <details class="ax-details">
   <summary>
@@ -43,15 +59,17 @@
           ("Owner", c.owner_email)
         ]) }}
         {% if c.reviewer %}
-          {{ ui.alert("🧑‍⚖️ " ~ c.reviewer ~ ": “" ~ (c.reviewer_comment or "") ~ "”" ~ (" ⚠️ overrode the AI recommendation" if c.override else ""), "review" if c.override else "info") }}
+          {{ ui.alert("Reviewer " ~ c.reviewer ~ ": “" ~ (c.reviewer_comment or "") ~ "”" ~ (" — overrode the AI recommendation" if c.override else ""), "review" if c.override else "info") }}
         {% endif %}
         <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-          <a class="ax-btn ax-btn--sm ax-btn--primary" href="{{ url_for('claim_detail', cid=c.claim_id) }}">🔍 Full detail</a>
-          <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Report</a>
+          <a class="ax-btn ax-btn--sm ax-btn--primary" href="{{ url_for('claim_detail', cid=c.claim_id) }}">Full detail</a>
+          <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_report', cid=c.claim_id) }}" style="display:inline-flex; align-items:center; gap:6px;">
+            {{ icon_download() }} Report
+          </a>
         </div>
       </div>
       <div style="text-align:center;">
-        <img src="{{ url_for('claim_card', cid=c.claim_id) }}" alt="card"
+        <img src="{{ url_for('claim_card', cid=c.claim_id) }}" alt="Claim Summary Card"
              style="width:100%; max-width:280px; border-radius:12px; border:1px solid var(--stroke);">
       </div>
     </div>

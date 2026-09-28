@@ -51,8 +51,9 @@ STAGING_DIR = ROOT / "uploads" / "_staging"
 app = Flask(__name__)
 app.secret_key = SETTINGS["session_secret"]
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-app.jinja_env.auto_reload = True
-CSRFProtect(app)  
+app.jinja_env.auto_reload = True  
+CSRFProtect(app)
+app.config["WTF_CSRF_EXEMPT_ROUTES"] = ["chat"]
 
 BOOT = {"models_ok": True, "fb_ok": True}
 try:
@@ -118,7 +119,7 @@ def login_required(roles=None):
         return wrapper
     return deco
 
-# -------------------------------------------------- security headers
+   
 @app.after_request
 def set_security_headers(response):
     response.headers["X-Content-Type-Options"] = "nosniff"
@@ -165,7 +166,7 @@ def _can_view(user, c):
         or c.get("owner_email") == user["email"]
 
 
-# ------------------------------------------------------------ staging utils
+   
 def _staging_dir():
     token = session.get("staging_token")
     if not token:
@@ -185,7 +186,7 @@ def _clear_staging():
     session.pop("ocr_info", None)
 
 
-# ------------------------------------------------------------------- auth
+   
 @app.route("/")
 def home():
     if not session.get("user"):
@@ -238,7 +239,7 @@ def logout():
     return redirect(url_for("login"))
 
 
-# -------------------------------------------------------------- dashboard
+   
 @app.route("/dashboard")
 @login_required()
 def dashboard():
@@ -294,8 +295,8 @@ def dashboard():
                            notes=notes_view, claims=claims[:6])
 
 
-# --------------------------------------------------------------- products
-# --------------------------------------------------------------- products
+   
+   
 @app.route("/products", methods=["GET", "POST"])
 @login_required()
 def products():
@@ -305,11 +306,11 @@ def products():
     alert_days = m["settings"]["warranty_alert_days"]
     templates = product_catalog.load_templates()
 
-    # optional pre-fill from the catalog (?t=TPL-xxxx)
+   
     tpl = product_catalog.get_template(request.values.get("t", ""))
 
     if request.method == "POST":
-        # admins / service centers may register on behalf of a customer
+   
         owner = user["email"]
         if user["role"] in ("admin", "service_center"):
             chosen = request.form.get("owner_email", "").strip().lower()
@@ -354,7 +355,7 @@ def products():
                   f"Warranty until {end.isoformat()}.", "success")
             return redirect(url_for("products"))
 
-    # admins oversee the whole product fleet; everyone else sees their own
+   
     product_list = (fdb.all_docs("products", limit=500)
                     if user["role"] == "admin"
                     else fdb.query("products", "owner_email", "==",
@@ -380,7 +381,7 @@ def products():
     return render_template("products.html", items=items, counts=counts,
                            categories=list(policies), policies=policies,
                            templates=templates, tpl=tpl)
-# -------------------------------------------------------------- new claim
+   
 @app.route("/new_claim", methods=["GET", "POST"])
 @login_required(roles=["customer", "service_center"])
 def new_claim():
@@ -511,7 +512,7 @@ def new_claim_submit():
 
     repair_count = int(request.form.get("repair_count", 0) or 0)
     staged = session.get("staged_docs", [])
-    # service centers may file on behalf of a named customer
+   
     acting_for = request.form.get("acting_for", "").strip().lower()
     owner = user["email"]
     if acting_for and user["role"] == "service_center":
@@ -536,9 +537,9 @@ def new_claim_submit():
         "repair_count": repair_count,
         "last_repair_date": (request.form.get("repair_date", "")
                              if repair_count > 0 else ""),
-                # zero-repair claims have no meaningful authorized/unauthorized
-        # status - force True to match the training distribution (where
-        # False only ever appeared alongside actual repairs)
+   
+   
+   
         "authorized_repair": repair_count == 0 or "authorized" in request.form,
         "serial_match": serial == P["serial_number"],
         "invoice_number": invoice,
@@ -558,9 +559,9 @@ def new_claim_submit():
         if p.exists():
             docs.append({"name": meta["name"], "type": meta["type"],
                          "bytes": p.read_bytes(), "sha256": meta["sha256"]})
-    # receipt verification flows into the fusion engine (must be set
-    # BEFORE evaluation - the old copy of this code was after the return
-    # and never ran)
+   
+   
+   
     ocr_v = session.get("ocr_verify")
     if ocr_v and ocr_v.get("verdict") == "mismatch":
         claim["_dup"] = dict(claim.get("_dup") or {})
@@ -585,7 +586,7 @@ def new_claim_submit():
 
 
 
-# ------------------------------------------------------------ claim detail
+   
 @app.route("/claim/<cid>")
 @login_required()
 def claim_detail(cid):
@@ -594,7 +595,7 @@ def claim_detail(cid):
         abort(404)
     risk_score, risk_reasons, risk_tone = fraud_risk(c)
 
-    # ---- defensive field access: old claims may predate some fields ----
+   
     def safe(field, default):
         v = c.get(field)
         return v if v not in (None, "") else default
@@ -671,7 +672,7 @@ def claim_report(cid):
                              f"attachment; filename={cid}_report.md"})
 
 
-# ----------------------------------------------------------------- claims
+   
 @app.route("/claims")
 @login_required()
 def claims():
@@ -714,7 +715,7 @@ def claims():
                                       "Manual Review Required"])
 
 
-# ------------------------------------------------------------ review queue
+   
 @app.route("/review")
 @login_required(roles=["reviewer", "admin"])
 def review_queue():
@@ -783,9 +784,9 @@ def review_action(cid):
                           "reviewer_comment": comment,
                           "reviewer_decision": decision,
                           "override": override,
-                          # the human decision becomes the effective outcome;
-                          # the AI recommendation is preserved in
-                          # ai_recommendation + the audit trail
+   
+   
+   
                           "ai_recommendation": c.get("final_decision"),
                           "final_decision": ("Likely Valid" if status == "Approved"
                                               else "Likely Invalid")},
@@ -806,7 +807,7 @@ def review_action(cid):
     return redirect(url_for("review_queue"))
 
 
-# ------------------------------------------------------------------ admin
+   
 @app.route("/admin")
 @login_required(roles=["admin"])
 def admin():
@@ -897,7 +898,7 @@ def admin_export():
     return Response(csv_data, mimetype="text/csv",
                     headers={"Content-Disposition":
                              "attachment; filename=assurex_claims_export.csv"})
-# ------------------------------------------------------ product catalog
+   
 @app.route("/admin/templates", methods=["GET", "POST"])
 @login_required(roles=["admin"])
 def admin_templates():
@@ -923,7 +924,7 @@ def admin_templates():
                            categories=categories)
 
 
-# ------------------------------------------------- smart product register
+   
 @app.route("/products/smart", methods=["GET", "POST"])
 @login_required()
 def smart_register():
@@ -973,7 +974,7 @@ def smart_register_save():
             or category not in policies:
         flash("All fields marked * are required.", "error")
         return redirect(url_for("smart_register"))
-    # admins / service centers may register on behalf of a customer
+   
     owner = user["email"]
     if user["role"] in ("admin", "service_center"):
         chosen = request.form.get("owner_email", "").strip().lower()
@@ -1007,9 +1008,9 @@ def smart_register_save():
     flash(f"✅ Registered {name} ({pid}) for {owner}. "
           f"Warranty until {end.isoformat()}.", "success")
     return redirect(url_for("products"))
-# ------------------------------------------------------------- profile
+   
 
-# ------------------------------------------------------------- profile
+   
 @app.route("/profile", methods=["GET", "POST"])
 @login_required()
 def profile():
@@ -1034,7 +1035,7 @@ def profile():
     return render_template("profile.html")
 
 
-# ----------------------------------------------------- profile photos
+   
 PROFILE_PHOTOS = ROOT / "uploads" / "_profile_photos"
 ALLOWED_PHOTO_EXT = (".jpg", ".jpeg", ".png")
 MAX_PHOTO_BYTES = 2 * 1024 * 1024   # 2 MB
@@ -1055,7 +1056,7 @@ def profile_photo_upload():
     if len(data) > MAX_PHOTO_BYTES:
         flash("Photo must be under 2 MB.", "error")
         return redirect(url_for("profile"))
-    # security: verify it is a REAL image, then normalise to a safe JPEG
+   
     try:
         img = Image.open(io.BytesIO(data))
         img = img.convert("RGB")
@@ -1103,7 +1104,7 @@ def profile_photo(email):
     return send_file(p, mimetype="image/jpeg")
 
 
-# ----------------------------------------------------- document actions
+   
 @app.route("/claim/<cid>/doc/<int:index>")
 @login_required()
 def claim_doc_download(cid, index):
@@ -1153,7 +1154,7 @@ def claim_doc_remove(cid, index):
     return redirect(url_for("claim_detail", cid=cid))
 
 
-# ------------------------------------------------- claim close lifecycle
+   
 @app.route("/claim/<cid>/close", methods=["POST"])
 @login_required(roles=["reviewer", "admin"])
 def claim_close(cid):
@@ -1172,7 +1173,7 @@ def claim_close(cid):
     fdb.notify(c["owner_email"], cid, "Claim " + cid + " has been closed.")
     flash("🔒 Claim " + cid + " closed.", "success")
     return redirect(url_for("claim_detail", cid=cid))
-# ------------------------------------------------ intelligent routing
+   
 @app.route("/claim/<cid>/dispatch")
 @login_required()
 def claim_dispatch(cid):
@@ -1245,7 +1246,7 @@ def claim_dispatch_confirm(cid):
     return redirect(url_for("claim_detail", cid=cid))
 
 
-# ------------------------------------------------------ service desk
+   
 @app.route("/desk")
 @login_required(roles=["service_center"])
 def service_desk():
@@ -1262,7 +1263,7 @@ def service_desk():
                            products=registered_by_us)
 
 
-# ------------------------------------------------ account approvals
+   
 @app.route("/admin/approvals")
 @login_required(roles=["admin"])
 def admin_approvals():
@@ -1308,7 +1309,7 @@ def admin_approval_action(email):
     return redirect(url_for("admin_approvals"))
 
 
-# ------------------------------------------------ entity links
+   
 @app.route("/admin/links")
 @login_required(roles=["admin", "reviewer"])
 def entity_links():
@@ -1324,7 +1325,7 @@ def entity_links():
                                   min_link_types=2)
     cluster_ids = {cid for cl in clusters
                    for cid in cl["members"]}
-       # ---- graph data: nodes + edges for the force graph
+   
     nodes, edges, seen = [], [], set()
     for c in claims:
         cid = c.get("claim_id")
@@ -1349,7 +1350,7 @@ def entity_links():
             edges.append({"source": eid, "target": cid})
 
     import json as _json
-        # ---- graph data: nodes + edges for the force graph
+   
     nodes, edges, seen = [], [], set()
     for c in claims:
         cid = c.get("claim_id")
@@ -1374,7 +1375,7 @@ def entity_links():
             edges.append({"source": eid, "target": cid})
 
     import json as _json
-        # ---- graph data: nodes + edges for the force graph
+   
     nodes, edges, seen = [], [], set()
     for c in claims:
         cid = c.get("claim_id")
@@ -1399,7 +1400,7 @@ def entity_links():
             edges.append({"source": eid, "target": cid})
 
     import json as _json
-        # ---- graph data: nodes + edges for the force graph
+   
     nodes, edges, seen = [], [], set()
     for c in claims:
         cid = c.get("claim_id")
@@ -1430,7 +1431,28 @@ def entity_links():
                            cluster_claims=len(cluster_ids),
                            graph_json=_json.dumps({"nodes": nodes,
                                                    "edges": edges}))
+   
+@app.route("/chat", methods=["POST"])
+@login_required()
+def chat():
+    """Help assistant - guidance only, NEVER makes claim decisions.
+    Groq AI rephrases stored explanations; the evaluation system's
+    outputs are the single source of decision content."""
+    from src import chatbot
+    message = request.form.get("message", "").strip()
+    if not message:
+        return {"response": "Please type a question."}
 
+    history = session.get("chat_history", [])
+    response = chatbot.chat(g.user["email"], message, fdb, history)
 
+   
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": response})
+    session["chat_history"] = history[-8:]
+
+    fdb.log_audit("chatbot_query", g.user["email"],
+                  {"message_length": len(message)})
+    return {"response": response}
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)

@@ -154,7 +154,7 @@ def main():
         lines.append(f"{cls[:15]:>15}" + "".join(f"{cm[i, j]:>15}"
                                                  for j in range(len(le.classes_))))
 
-    # feature importances, where the selected algorithm provides them
+     
     clf = final.named_steps["clf"]
     if hasattr(clf, "feature_importances_"):
         names = final.named_steps["preprocess"].get_feature_names_out()
@@ -165,7 +165,7 @@ def main():
         for n, v in imp:
             lines.append(f"  {n:40s} {v:.4f}")
 
-    # sample test predictions (SRS deliverable: sample predictions)
+     
     lines.append("")
     lines.append("Sample test predictions (first 5):")
     for i in range(5):
@@ -176,7 +176,7 @@ def main():
     report_text = "\n".join(lines)
     print("\n" + report_text)
 
-    # ---- persist everything the live app needs
+     
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     REPORTS.mkdir(parents=True, exist_ok=True)
     joblib.dump(final, MODEL_DIR / "model.joblib")

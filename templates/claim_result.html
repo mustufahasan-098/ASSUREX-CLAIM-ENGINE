@@ -5,16 +5,22 @@
 {% set is_staff = g.user.role in ('reviewer', 'admin') %}
 {% set d_tone = {'Likely Valid': 'valid', 'Likely Invalid': 'invalid',
                  'Manual Review Required': 'review'}.get(c.final_decision, 'review') %}
-{% set d_icon = {'Likely Valid': '✅', 'Likely Invalid': '⛔',
-                 'Manual Review Required': '👤'}.get(c.final_decision, '👤') %}
 
 {% block content %}
 
 {% if is_staff %}
-  {# ══════════════ STAFF VIEW ══════════════ #}
+ 
 
   <div class="ax-decision-hero ax-decision-hero--{{ d_tone }}">
-    <div class="ax-dh-icon">{{ d_icon }}</div>
+    <div class="ax-dh-icon">
+      {% if c.final_decision == 'Likely Valid' %}
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+      {% elif c.final_decision == 'Likely Invalid' %}
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+      {% else %}
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      {% endif %}
+    </div>
     <div>
       <div class="ax-dh-title">{{ c.final_decision }}</div>
       <div class="ax-dh-sub">Claim {{ c.claim_id }} · {{ c.brand }} {{ c.model }} · {{ c.fault_category.replace('_',' ') }}</div>
@@ -32,22 +38,22 @@
 
   <div class="ax-verdict-row">
     <div class="ax-verdict">
-      <div class="ax-v-label">🐍 Python model</div>
+      <div class="ax-v-label">Python model</div>
       <div class="ax-v-value">{{ py_short }}</div>
       <div class="ax-v-sub">{{ "%.0f"|format(c.py_top_conf|float*100) }}% confidence</div>
     </div>
     <div class="ax-verdict">
-      <div class="ax-v-label">🖼️ Teachable Machine</div>
+      <div class="ax-v-label">Teachable Machine</div>
       <div class="ax-v-value">{{ tm_short }}</div>
       <div class="ax-v-sub">{{ "%.0f"|format(c.tm_top_conf|float*100) }}% confidence</div>
     </div>
     <div class="ax-verdict">
-      <div class="ax-v-label">🤝 Models agree</div>
+      <div class="ax-v-label">Models agree</div>
       <div class="ax-v-value">{{ "Yes" if c.python_pred == c.tm_pred else "No" }}</div>
       <div class="ax-v-sub">{{ c.consistency }}</div>
     </div>
     <div class="ax-verdict">
-      <div class="ax-v-label">🕵️ Fraud risk</div>
+      <div class="ax-v-label">Fraud risk</div>
       <div class="ax-v-value">{{ risk_score }}/100</div>
       <div class="ax-v-sub">{{ "Low" if risk_score < 30 else ("Elevated" if risk_score < 60 else "High") }}</div>
     </div>
@@ -55,33 +61,33 @@
 
   <div class="ax-grid-2">
     <div class="ax-model-card ax-model-card--py">
-      <div class="ax-model-head"><h4>🐍 Python classification model</h4>
+      <div class="ax-model-head"><h4>Python classification model</h4>
         <span class="ax-model-badge">{{ c.model_versions.python if c.model_versions and c.model_versions.python else '—' }}</span></div>
       {% if c.py_probs %}{{ ui.prob_bars(c.py_probs) }}
       {% else %}
         {{ ui.kv_grid([("Top prediction", c.python_pred or "—"),
                        ("Confidence", "%.0f"|format(c.py_top_conf|float*100) ~ "%")]) }}
         <div class="ax-bar-row">
-          <div class="ax-bar-label ax-bar-top">{{ c.python_pred or "Prediction" }} ⭐</div>
+          <div class="ax-bar-label ax-bar-top">{{ c.python_pred or "Prediction" }}</div>
           <div class="ax-bar-track"><div class="ax-bar-fill ax-bar-fill--{{ py_tone }}" style="width: {{ (c.py_top_conf|float*100)|round(1) }}%"></div></div>
           <div class="ax-bar-pct">{{ "%.0f"|format(c.py_top_conf|float*100) }}%</div>
         </div>
-        <div class="ax-legacy-note">📦 Legacy record — created before per-class probability logging. All claims since record full three-class breakdowns.</div>
+        <div class="ax-legacy-note">Legacy record — created before per-class probability logging. All claims since record full three-class breakdowns.</div>
       {% endif %}
     </div>
     <div class="ax-model-card ax-model-card--tm">
-      <div class="ax-model-head"><h4>🖼️ Teachable Machine model</h4>
+      <div class="ax-model-head"><h4>Teachable Machine model</h4>
         <span class="ax-model-badge">{{ c.model_versions.tm if c.model_versions and c.model_versions.tm else '—' }}</span></div>
       {% if c.tm_probs %}{{ ui.prob_bars(c.tm_probs) }}
       {% else %}
         {{ ui.kv_grid([("Top prediction", c.tm_pred or "—"),
                        ("Confidence", "%.0f"|format(c.tm_top_conf|float*100) ~ "%")]) }}
         <div class="ax-bar-row">
-          <div class="ax-bar-label ax-bar-top">{{ c.tm_pred or "Prediction" }} ⭐</div>
+          <div class="ax-bar-label ax-bar-top">{{ c.tm_pred or "Prediction" }}</div>
           <div class="ax-bar-track"><div class="ax-bar-fill ax-bar-fill--{{ tm_tone }}" style="width: {{ (c.tm_top_conf|float*100)|round(1) }}%"></div></div>
           <div class="ax-bar-pct">{{ "%.0f"|format(c.tm_top_conf|float*100) }}%</div>
         </div>
-        <div class="ax-legacy-note">📦 Legacy record — per-class probabilities not logged at creation time.</div>
+        <div class="ax-legacy-note">Legacy record — per-class probabilities not logged at creation time.</div>
       {% endif %}
     </div>
   </div>
@@ -89,7 +95,7 @@
   {{ ui.section("🧠", "Why this decision") }}
   <div class="ax-grid-2">
     <div class="ax-why-card">
-      <div class="ax-why-head"><h4>✅ Factors supporting</h4></div>
+      <div class="ax-why-head"><h4>Factors supporting</h4></div>
       <ul class="ax-why-list ax-why-list--pro">
         {% for f in c.explanation.support %}<li>{{ f }}</li>{% endfor %}
         {% for w in c.explanation.warnings %}<li>{{ w }}</li>{% endfor %}
@@ -97,7 +103,7 @@
       </ul>
     </div>
     <div class="ax-why-card">
-      <div class="ax-why-head"><h4>⚠️ Factors against / attention</h4></div>
+      <div class="ax-why-head"><h4>Factors against / attention</h4></div>
       <ul class="ax-why-list ax-why-list--con">
         {% for f in c.explanation.oppose %}<li>{{ f }}</li>{% endfor %}
         {% if not c.explanation.oppose %}<li>None</li>{% endif %}
@@ -119,7 +125,7 @@
 
   {% if c.fraud and c.fraud.signals %}
   <details class="ax-details">
-    <summary>🕵️ Fraud-risk breakdown — {{ c.fraud.score }}/100 · {{ c.fraud.families }} independent indicators{% if c.fraud.escalated %} · <b>escalated</b>{% endif %}</summary>
+    <summary>Fraud-risk breakdown — {{ c.fraud.score }}/100 · {{ c.fraud.families }} independent indicators{% if c.fraud.escalated %} · <b>escalated</b>{% endif %}</summary>
     <div class="ax-details-body" style="overflow-x:auto;">
       <table class="ax-table">
         <thead><tr><th>Signal</th><th>Points</th><th>Evidence</th></tr></thead>
@@ -151,16 +157,16 @@
 
   {% if c.documents %}
   <div class="ax-card">
-    <h4>📎 Documents ({{ c.documents|length }})</h4>
+    <h4>Documents ({{ c.documents|length }})</h4>
     {% for d in c.documents %}
     <div class="ax-doc-item">
-      <span>📎 <b>{{ d.type.replace('_',' ')|title }}</b> — {{ d.filename }} ·
+      <span><b>{{ d.type.replace('_',' ')|title }}</b> — {{ d.filename }} ·
         <code>{{ d.sha256[:14] }}…</code> · {{ "%.0f"|format(d.size / 1024) }} KB</span>
       <span style="display:flex; gap:6px;">
-        <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_doc_download', cid=c.claim_id, index=loop.index0) }}">⬇️</a>
+        <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_doc_download', cid=c.claim_id, index=loop.index0) }}">Download</a>
         {% if (g.user.role == 'admin' or c.owner_email == g.user.email) and c.status not in ('Approved', 'Rejected', 'Closed') %}
         <form method="post" action="{{ url_for('claim_doc_remove', cid=c.claim_id, index=loop.index0) }}" style="display:inline;">
-          <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit">🗑️</button>
+          <button class="ax-btn ax-btn--sm ax-btn--danger" type="submit">Remove</button>
         </form>
         {% endif %}
       </span>
@@ -175,7 +181,7 @@
     {{ ui.kv_grid([
       ("Product age at fault", c.derived_features.product_age_days ~ " days" if c.derived_features.product_age_days is not none else "N/A"),
       ("Warranty days remaining", c.derived_features.warranty_days_remaining if c.derived_features.warranty_days_remaining is not none else "N/A"),
-      ("Days fault→claim", c.derived_features.days_to_report if c.derived_features.days_to_report is not none else "N/A"),
+      ("Days fault to claim", c.derived_features.days_to_report if c.derived_features.days_to_report is not none else "N/A"),
       ("Missing documents", c.derived_features.missing_docs_count),
       ("Warranty expired at fault", "Yes" if c.derived_features.warranty_expired else "No"),
       ("Within grace period", "Yes" if c.derived_features.within_grace else "No")
@@ -188,7 +194,7 @@
     <div><img src="{{ url_for('claim_card', cid=c.claim_id) }}" alt="Claim Summary Card"
          style="width:100%; max-width:430px; border-radius:14px; border:1px solid var(--stroke); box-shadow:var(--sh-2);"></div>
     <div class="ax-card" style="align-self:start;">
-      <h4>🪪 Independence by design</h4>
+      <h4>Independence by design</h4>
       <p style="font-size:.88rem;">Generated from claim facts only — <b>no predictions or confidence scores on the card</b> (SRS req xx). Both models evaluate independently; this exact image was classified by the Teachable Machine model.</p>
     </div>
   </div>
@@ -213,21 +219,29 @@
   {% endif %}
 
   <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
-    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Full report</a>
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">Full report</a>
     <form method="post" action="{{ url_for('claim_close', cid=c.claim_id) }}" style="display:inline;">
-      <button class="ax-btn" type="submit">🔒 Close claim</button>
+      <button class="ax-btn" type="submit">Close claim</button>
     </form>
-    <a class="ax-btn" href="{{ url_for('claims') }}">🗂️ All claims</a>
+    <a class="ax-btn" href="{{ url_for('claims') }}">All claims</a>
   </div>
 
 {% else %}
-  {# ══════════════ CUSTOMER VIEW ══════════════ #}
+  
 
   <div class="ax-decision-hero ax-decision-hero--{{ d_tone }}">
-    <div class="ax-dh-icon">{{ d_icon }}</div>
+    <div class="ax-dh-icon">
+      {% if c.final_decision == 'Likely Valid' %}
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+      {% elif c.final_decision == 'Likely Invalid' %}
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+      {% else %}
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      {% endif %}
+    </div>
     <div>
       <div class="ax-dh-title">
-        {% if c.status == 'Approved' %}Your claim is approved 🎉
+        {% if c.status == 'Approved' %}Your claim is approved
         {% elif c.status == 'Rejected' %}Claim decision ready
         {% elif c.status == 'Closed' %}Claim completed
         {% else %}We're on it{% endif %}
@@ -240,7 +254,7 @@
   </div>
 
   {% if c.status == 'Approved' %}
-    {{ ui.alert("Good news — your claim has been approved! Your product is covered under the warranty terms.", "valid") }}
+    {{ ui.alert("Good news — your claim has been approved. Your product is covered under the warranty terms.", "valid") }}
   {% elif c.status == 'Rejected' %}
     {{ ui.alert("We're sorry — this claim was not approved. The reason is explained below.", "invalid") }}
   {% elif c.status == 'Closed' %}
@@ -254,9 +268,22 @@
     {% set stage = 0 if c.status in ('Manual Review', 'Additional Information Required') else
                     (1 if c.status in ('Approved', 'Rejected') else 2) %}
     <div class="ax-stepper">
-      <div class="ax-step ax-step--done"><div class="ax-step-dot">📤</div><div class="ax-step-label">Submitted</div></div>
-      <div class="ax-step {{ 'ax-step--done' if stage >= 1 else 'ax-step--active' }}"><div class="ax-step-dot">🔍</div><div class="ax-step-label">In review</div></div>
-      <div class="ax-step {{ 'ax-step--done' if stage >= 2 }}"><div class="ax-step-dot">{{ '🏁' if stage >= 2 else '⏳' }}</div><div class="ax-step-label">Decided</div></div>
+      <div class="ax-step ax-step--done"><div class="ax-step-dot">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><div class="ax-step-label">Submitted</div></div>
+      <div class="ax-step {{ 'ax-step--done' if stage >= 1 else 'ax-step--active' }}"><div class="ax-step-dot">
+        {% if stage >= 1 %}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        {% else %}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        {% endif %}
+        </div><div class="ax-step-label">In review</div></div>
+      <div class="ax-step {{ 'ax-step--done' if stage >= 2 }}"><div class="ax-step-dot">
+        {% if stage >= 2 %}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        {% else %}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        {% endif %}
+        </div><div class="ax-step-label">Decided</div></div>
     </div>
   </div>
 
@@ -308,8 +335,8 @@
   <div class="ax-card">
     {% for d in c.documents %}
     <div class="ax-doc-item">
-      <span>📎 <b>{{ d.type.replace('_',' ')|title }}</b> — {{ d.filename }} · {{ "%.0f"|format(d.size / 1024) }} KB</span>
-      <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_doc_download', cid=c.claim_id, index=loop.index0) }}">⬇️</a>
+      <span><b>{{ d.type.replace('_',' ')|title }}</b> — {{ d.filename }} · {{ "%.0f"|format(d.size / 1024) }} KB</span>
+      <a class="ax-btn ax-btn--sm" href="{{ url_for('claim_doc_download', cid=c.claim_id, index=loop.index0) }}">Download</a>
     </div>
     {% endfor %}
   </div>
@@ -330,7 +357,7 @@
   {{ ui.section("🔧", "Book your repair") }}
   <div class="ax-card">
     <p style="font-size:.9rem;">Your claim is approved — schedule a certified repair near you.</p>
-    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_dispatch', cid=c.claim_id) }}">🔧 Find a service center</a>
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_dispatch', cid=c.claim_id) }}">Find a service center</a>
   </div>
   {% endif %}
 
@@ -338,9 +365,9 @@
   <div class="ax-card">{{ ui.timeline(c.timeline) }}</div>
 
   <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
-    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">⬇️ Claim report</a>
-    <a class="ax-btn" href="{{ url_for('new_claim') }}">➕ New claim</a>
-    <a class="ax-btn" href="{{ url_for('claims') }}">📁 My claims</a>
+    <a class="ax-btn ax-btn--primary" href="{{ url_for('claim_report', cid=c.claim_id) }}">Claim report</a>
+    <a class="ax-btn" href="{{ url_for('new_claim') }}">New claim</a>
+    <a class="ax-btn" href="{{ url_for('claims') }}">My claims</a>
   </div>
 
 {% endif %}

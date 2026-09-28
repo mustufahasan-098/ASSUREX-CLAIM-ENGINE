@@ -77,6 +77,33 @@
   </div>
 
   <script src="{{ url_for('static', filename='csrf.js') }}"></script>
+    {% if current_user and current_user.role in ('customer', 'service_center') %}
+  <div id="axChatFab" onclick="toggleChat()" title="Help Assistant">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      <circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="13" cy="10" r="1" fill="currentColor"/><circle cx="17" cy="10" r="1" fill="currentColor"/>
+    </svg>
+  </div>
+  <div id="axChatPanel">
+    <div id="axChatHeader">
+      <div>
+        <b>💬 AssureX Help</b>
+        <div style="font-size:.68rem; opacity:.7;">Guidance only — decisions are made by the AI evaluation system</div>
+      </div>
+      <button onclick="toggleChat()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.2rem;">×</button>
+    </div>
+    <div id="axChatMessages"></div>
+    <div id="axChatDisclaimer">
+      (NOTICE) This assistant provides navigation help and presents stored claim information. It does not make, predict, or influence claim decisions.
+    </div>
+    <form id="axChatForm" onsubmit="return sendChat(event)">
+      <input type="text" id="axChatInput" placeholder="Ask how to use AssureX..." autocomplete="off">
+      <button type="submit" id="axChatSend">➤</button>
+    </form>
+  </div>
+  {% endif %}
   <script src="{{ url_for('static', filename='eval_overlay.js') }}"></script>
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='ax-enhance.js') }}"></script>
 </body>
 </html>

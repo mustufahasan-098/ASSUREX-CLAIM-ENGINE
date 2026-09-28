@@ -1,12 +1,24 @@
 {% extends "base.html" %}
 {% import "macros.html" as ui %}
 {% block title %}Dashboard — AssureX{% endblock %}
+
+{% macro icon_bell() -%}
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+{%- endmacro %}
+
+{% macro icon_alert() -%}
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+{%- endmacro %}
+
 {% block content %}
 {{ ui.hero("🏠", "Welcome back, " + first_name, role + " workspace · warranty alerts " + alert_days ~ " days before expiry") }}
 {{ ui.stat_row(stats) }}
 
 {% if expiring_list %}
-  {{ ui.alert("⏰ Warranty expiring soon:  " + expiring_list|join("  ·  "), "review") }}
+  <div class="ax-alert ax-alert--review" style="display:flex; align-items:center; gap:10px;">
+    {{ icon_alert() }}
+    <span><b>Warranty expiring soon:</b> {{ expiring_list|join("  ·  ") }}</span>
+  </div>
 {% endif %}
 {% if expired %}
   {{ ui.alert(expired ~ " product(s) have expired warranties — claims for them will likely be invalid.", "invalid") }}
@@ -15,7 +27,7 @@
 {% if notes %}
 {{ ui.section("🔔", "Notifications") }}
 <details class="ax-details" open>
-  <summary>Latest {{ notes|length }} notifications</summary>
+  <summary style="gap:8px;">{{ icon_bell() }} Latest {{ notes|length }} notifications</summary>
   <div class="ax-details-body">{{ ui.timeline(notes) }}</div>
 </details>
 {% endif %}
@@ -28,11 +40,11 @@
   <details class="ax-details">
     <summary>
       <b>{{ c.claim_id }}</b> · {{ c.brand }} {{ c.model }}
-      <span style="color:var(--text-low); font-weight:500;">· {{ c.fault_category.replace('_',' ') }}</span>
+      <span style="color:var(--t-low); font-weight:500;">· {{ c.fault_category.replace('_',' ') }}</span>
       <span style="margin-left:auto;">{{ ui.status_badge(c.status) }} {{ ui.status_badge(c.final_decision) }}</span>
     </summary>
     <div class="ax-details-body">
-      <div style="font-size:.88rem; color:var(--text-mid);">{{ c.summary[:300] }}{% if c.summary|length > 300 %}…{% endif %}</div>
+      <div style="font-size:.88rem; color:var(--t-mid);">{{ c.summary[:300] }}{% if c.summary|length > 300 %}…{% endif %}</div>
     </div>
   </details>
   {% endfor %}

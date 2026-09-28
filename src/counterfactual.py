@@ -35,8 +35,8 @@ def _date_flip(claim, policy, purchase, fault, claim_d, expiry):
     deadline_days = int(policy["claim_reporting_period_days"])
     candidate = dict(claim)
     candidate["fault_date"] = expiry.isoformat()
-    # claim date must be after the (moved) fault AND within deadline -
-    # pick the day after expiry as the submission date
+     
+     
     candidate["claim_date"] = (expiry + timedelta(days=1)).isoformat()
     if _verify(candidate, policy):
         days = (fault - expiry).days
@@ -126,7 +126,7 @@ def _combined_flip(claim, policy):
     fault = parse_date(claim["fault_date"])
 
     combos = []
-    # warranty extension + covered fault
+     
     c = dict(claim)
     c["fault_category"] = policy["covered_faults"][0]
     months = int(claim.get("warranty_months") or 0) \
@@ -139,7 +139,7 @@ def _combined_flip(claim, policy):
                                            or 0) + extra
                 break
     combos.append(c)
-    # documents + serial
+     
     c2 = dict(claim)
     for doc in policy["mandatory_documents"]:
         c2[f"has_{doc}"] = True

@@ -2,14 +2,14 @@
 {% import "macros.html" as ui %}
 {% block title %}Service Desk — AssureX{% endblock %}
 {% block content %}
-{{ ui.hero("🏪", "Service Desk", "Register products and file claims on behalf of walk-in customers") }}
+{{ ui.hero("", "Service Desk", "Register products and file claims on behalf of walk-in customers") }}
 
 {{ ui.stat_row([
   {"label": "Claims filed", "value": claims|length, "icon": "📝", "tone": "neutral"},
   {"label": "Products registered", "value": products|length, "icon": "📦", "tone": "valid"}
 ]) }}
 
-{{ ui.section("⚡", "Quick actions") }}
+{{ ui.section("", "Quick actions") }}
 <div class="ax-grid-2">
   <div class="ax-card">
     <h4>📝 File a claim for a customer</h4>
@@ -23,7 +23,7 @@
     <p style="font-size:.8rem; color:var(--t-low); margin-top:10px;">The claim is filed under the customer\'s account — they track it, you file it.</p>
   </div>
   <div class="ax-card">
-    <h4>📦 Register a product</h4>
+    <h4> Register a product</h4>
     <a class="ax-btn ax-btn--primary" href="{{ url_for('products') }}">Register product for customer</a>
     <p style="font-size:.8rem; color:var(--t-low); margin-top:10px;">Use the "Register for customer" field to attach the product to the customer\'s account.</p>
   </div>

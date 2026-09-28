@@ -81,7 +81,7 @@ def main():
                    "Power Tools", "Bosch", "GSR 18V", "SNSEED0003",
                    TODAY - timedelta(days=900), 180.0)
 
-    # 1 - clean valid claim (warranty active, covered fault, on time)
+     
     c1 = {**base_claim(), "product_category": "Electronics",
           "brand": "Samsung", "model": "Galaxy S22",
           "serial_number": "SNSEED0001",
@@ -91,7 +91,7 @@ def main():
           "claim_date": TODAY.isoformat(), "fault_category": "screen_defect",
           "invoice_number": "INV-SEED-001"}
 
-    # 2 - expired warranty (invalid)
+     
     c2 = {**base_claim(), "product_category": "Power Tools",
           "brand": "Bosch", "model": "GSR 18V", "serial_number": "SNSEED0003",
           "purchase_date": (TODAY - timedelta(days=900)).isoformat(),
@@ -100,7 +100,7 @@ def main():
           "claim_date": TODAY.isoformat(), "fault_category": "motor_failure",
           "invoice_number": "INV-SEED-002"}
 
-    # 3 - manual review (missing receipt + serial mismatch)
+     
     c3 = {**base_claim(), "product_category": "Home Appliances",
           "brand": "LG", "model": "Fridge 340L", "serial_number": "SNSEED0002",
           "purchase_date": (TODAY - timedelta(days=150)).isoformat(),

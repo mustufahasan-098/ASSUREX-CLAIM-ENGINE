@@ -21,7 +21,7 @@
     </form>
   </div>
   <div class="ax-card">
-    <h4>⚠️ How this works (and what the AI can NOT do)</h4>
+    <h4> How this works (and what the AI can NOT do)</h4>
     <p style="font-size:.88rem;">
       The AI suggests <b>brand, model and category</b>. You must verify every field before saving.<br><br>
       ✅ Warranty duration comes from the <b>local policy file</b> for the chosen category.<br>
@@ -50,14 +50,14 @@
   </div>
   {% else %}
   <div class="ax-card">
-    <h4>⚠️ AI lookup unavailable</h4>
+    <h4> AI lookup unavailable</h4>
     <p style="font-size:.88rem;">{{ result.error }}</p>
     <p style="font-size:.88rem;">Fill the form manually — everything works without the AI.</p>
   </div>
   {% endif %}
 
   <div class="ax-form-card">
-    <h4>✍️ Step 2 — Verify & complete</h4>
+    <h4> Step 2 — Verify & complete</h4>
     <form method="post" action="{{ url_for('smart_register_save') }}">
       <div class="ax-grid-2">
         <div class="ax-field"><label>Product name *</label>
