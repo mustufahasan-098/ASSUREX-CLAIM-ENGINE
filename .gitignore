@@ -6,3 +6,4 @@ data/cards/
 _tm_extract/
 *.pyc
 .env
+Tesseract-OCR/
