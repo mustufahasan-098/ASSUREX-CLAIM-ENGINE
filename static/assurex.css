@@ -2231,3 +2231,389 @@ img[alt="Claim Summary Card"]:hover {
 .ax-nav::-webkit-scrollbar-thumb {
   background: rgba(109,139,255,.2); border-radius: 99px;
 }
+
+.ax-nav-toggle {
+  display: none;
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+  z-index: 1400;
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  background: rgba(10,13,24,.85);
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  cursor: pointer;
+  box-shadow: var(--sh-2);
+  transition: border-color .25s ease;
+}
+.ax-nav-toggle:hover { border-color: var(--acc-stroke); }
+.ax-nav-toggle span {
+  display: block; width: 20px; height: 2px; border-radius: 2px;
+  background: var(--t-hi);
+  transition: transform .4s var(--spring), opacity .2s ease;
+}
+body.ax-nav-open .ax-nav-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+body.ax-nav-open .ax-nav-toggle span:nth-child(2) { opacity: 0; transform: scaleX(.2); }
+body.ax-nav-open .ax-nav-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.ax-nav-backdrop {
+  position: fixed; inset: 0; z-index: 1150;
+  background: rgba(3,4,8,.6);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .4s var(--smooth);
+}
+body.ax-nav-open .ax-nav-backdrop { opacity: 1; pointer-events: auto; }
+body.ax-nav-open { overflow: hidden; }
+
+@media (max-width: 900px) {
+  .ax-nav-toggle { display: flex; }
+  .ax-sidenav {
+    position: fixed; top: 0; left: 0; z-index: 1200;
+    transform: translateX(-100%);
+    transition: transform .45s var(--smooth);
+    width: min(280px, 85vw);
+    box-shadow: 0 0 60px rgba(0,0,0,.5);
+  }
+  body.ax-nav-open .ax-sidenav { transform: translateX(0); }
+  .ax-main { padding-top: 4.2rem; }
+}
+
+@media (max-width: 900px) {
+  .ax-sidenav {
+    display: flex !important;
+    position: fixed !important;
+    top: 0; left: 0; z-index: 1200;
+    transform: translateX(-100%);
+    transition: transform .45s cubic-bezier(.22,1,.36,1);
+    width: min(280px, 85vw);
+    height: 100vh;
+    box-shadow: 0 0 60px rgba(0,0,0,.55);
+    overflow-y: auto;
+  }
+  body.ax-nav-open .ax-sidenav { transform: translateX(0); }
+  .ax-main { padding-top: 4.4rem; }
+  .ax-nav-toggle {
+    display: flex !important;
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: max(14px, env(safe-area-inset-left));
+    z-index: 1400;
+    width: 46px; height: 46px;
+    border-radius: 14px;
+    flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    background: rgba(10,13,24,.85);
+    border: 1px solid rgba(255,255,255,.1);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.28), 0 8px 22px rgba(0,0,0,.38);
+  }
+  .ax-nav-toggle span {
+    display: block; width: 20px; height: 2px; border-radius: 2px;
+    background: #F4F7FC;
+    transition: transform .4s cubic-bezier(.34,1.4,.5,1), opacity .2s ease;
+  }
+  body.ax-nav-open .ax-nav-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  body.ax-nav-open .ax-nav-toggle span:nth-child(2) { opacity: 0; transform: scaleX(.2); }
+  body.ax-nav-open .ax-nav-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .ax-nav-backdrop {
+    display: block;
+    position: fixed; inset: 0; z-index: 1150;
+    background: rgba(3,4,8,.6);
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .4s cubic-bezier(.22,1,.36,1);
+  }
+  body.ax-nav-open .ax-nav-backdrop { opacity: 1; pointer-events: auto; }
+  body.ax-nav-open { overflow: hidden; }
+}
+@media (min-width: 901px) {
+  .ax-nav-toggle { display: none !important; }
+  .ax-nav-backdrop { display: none !important; }
+}
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE GLASS EDITION — premium glassmorphism for small screens
+   Deep frosted drawer, glass cards, touch-optimized, safe areas
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+
+  /* ---- Drawer: deep frosted glass panel ---- */
+  .ax-sidenav {
+    background:
+      radial-gradient(400px 300px at 110% 0%, rgba(109,139,255,.18), transparent 55%),
+      radial-gradient(280px 220px at -15% 105%, rgba(88,214,208,.1), transparent 55%),
+      linear-gradient(180deg, rgba(8,12,22,.9) 0%, rgba(5,8,15,.95) 100%);
+    backdrop-filter: blur(26px) saturate(170%) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(170%) !important;
+    border-right: 1px solid rgba(140,164,255,.15);
+    box-shadow: 20px 0 70px rgba(0,0,0,.6),
+                inset -1px 0 0 rgba(255,255,255,.05);
+  }
+  /* light edge along drawer's right side */
+  .ax-sidenav::after {
+    content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+    background: linear-gradient(180deg,
+      transparent, rgba(140,164,255,.3) 15%,
+      rgba(88,214,208,.2) 50%, rgba(140,164,255,.25) 85%, transparent);
+    pointer-events: none;
+  }
+
+  /* ---- Hamburger button: glass pill with glow ---- */
+  .ax-nav-toggle {
+    background: rgba(13,18,32,.72) !important;
+    border: 1px solid rgba(140,164,255,.22) !important;
+    backdrop-filter: blur(18px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4),
+                0 0 18px -4px rgba(109,139,255,.35),
+                inset 0 1px 0 rgba(255,255,255,.1) !important;
+    border-radius: 15px !important;
+  }
+  .ax-nav-toggle:active {
+    transform: scale(.92);
+    box-shadow: 0 2px 10px rgba(0,0,0,.4), inset 0 2px 6px rgba(0,0,0,.3) !important;
+  }
+  .ax-nav-toggle span {
+    background: linear-gradient(90deg, #F4F7FC, #8CA4FF) !important;
+    box-shadow: 0 0 8px rgba(140,164,255,.5);
+  }
+
+  /* ---- Backdrop: deeper glass blur ---- */
+  .ax-nav-backdrop {
+    background: rgba(3,4,8,.7) !important;
+    backdrop-filter: blur(10px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+  }
+
+  /* ---- Nav links in drawer: glass pills ---- */
+  .ax-navlink {
+    background: rgba(255,255,255,.028);
+    border: 1px solid rgba(255,255,255,.045);
+    margin-bottom: 4px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 13px !important;
+    padding: 13px 15px !important;
+    font-size: .95rem !important;
+  }
+  .ax-navlink:active {
+    transform: scale(.97);
+    background: rgba(109,139,255,.14);
+  }
+  .ax-navlink.active {
+    background: linear-gradient(90deg, rgba(109,139,255,.2), rgba(109,139,255,.05)) !important;
+    border-color: rgba(109,139,255,.3) !important;
+    box-shadow: 0 4px 18px -6px rgba(109,139,255,.4),
+                inset 0 1px 0 rgba(255,255,255,.06) !important;
+  }
+  /* icon glow on active */
+  .ax-navlink.active span:first-child {
+    text-shadow: 0 0 12px rgba(140,164,255,.7);
+  }
+
+  /* ---- User card in drawer: elevated glass ---- */
+  .ax-user {
+    background: rgba(255,255,255,.03);
+    border-top: 1px solid rgba(140,164,255,.12);
+    border-radius: 16px 16px 0 0;
+    margin: 14px 8px 8px;
+    padding: 16px 12px 12px !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .ax-user::before {
+    content: ""; position: absolute; top: -1px; left: 20%; right: 20%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(140,164,255,.35), transparent);
+  }
+  .ax-user .role { color: #8CA4FF; opacity: .75; }
+  .ax-user .ax-btn {
+    background: rgba(255,107,107,.08);
+    border: 1px solid rgba(255,107,107,.18);
+    color: #FF8DA3;
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+  }
+  .ax-user .ax-btn:active { transform: scale(.97); background: rgba(255,107,107,.15); }
+
+  /* ---- All cards: deep glass on mobile ---- */
+  .ax-card, .ax-stat, .ax-verdict, .ax-model-card, .ax-why-card,
+  .ax-form-card, details.ax-details, .ax-empty, .ax-doc-item {
+    backdrop-filter: blur(18px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+    background: rgba(255,255,255,.032) !important;
+  }
+
+  /* ---- Hero: taller, richer on mobile ---- */
+  .ax-hero {
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border-color: rgba(140,164,255,.28) !important;
+    padding: 24px 22px !important;
+    border-radius: 22px !important;
+  }
+  .ax-hero h1 { font-size: 1.4rem !important; }
+  .ax-hero .ax-hero-icon { width: 48px; height: 48px; border-radius: 14px; }
+
+  /* ---- Decision hero: glass + bigger touch targets ---- */
+  .ax-decision-hero {
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    padding: 22px 20px !important;
+    border-radius: 20px !important;
+  }
+  .ax-decision-hero .ax-dh-icon {
+    width: 56px; height: 56px; border-radius: 16px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .ax-dh-chip {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-color: rgba(255,255,255,.18) !important;
+    font-size: .74rem !important;
+  }
+
+  /* ---- Stat cards: stacked glass, generous touch ---- */
+  .ax-stats { gap: 10px; }
+  .ax-stat {
+    padding: 15px 16px !important;
+    border-radius: 17px !important;
+  }
+  .ax-stat:active { transform: scale(.98); }
+
+  /* ---- Alerts + badges: glass sheen ---- */
+  .ax-alert {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    font-size: .88rem !important;
+  }
+  .ax-badge {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    font-size: .74rem !important;
+    padding: 5px 13px !important;
+  }
+
+  /* ---- Buttons: bigger touch areas + glass ---- */
+  .ax-btn {
+    min-height: 48px;
+    padding: 12px 22px !important;
+    border-radius: 13px !important;
+    font-size: .95rem !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .ax-btn:active { transform: scale(.96) !important; }
+  .ax-btn--primary {
+    box-shadow: 0 4px 18px -4px rgba(109,139,255,.55),
+                inset 0 1px 0 rgba(255,255,255,.3) !important;
+  }
+
+  /* ---- Inputs: glass fields, large hit area ---- */
+  .ax-input, .ax-input-lg {
+    min-height: 48px;
+    padding: 13px 16px !important;
+    border-radius: 12px !important;
+    background: rgba(6,9,18,.6) !important;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
+    font-size: 16px !important;   /* prevents iOS zoom-on-focus */
+  }
+  .ax-input:focus, .ax-input-lg:focus {
+    background: rgba(9,14,24,.75) !important;
+    box-shadow: 0 0 0 3px rgba(109,139,255,.2),
+                0 0 24px -6px rgba(109,139,255,.4),
+                inset 0 2px 6px rgba(0,0,0,.25) !important;
+  }
+
+  /* ---- Bar rows: full-width stacking ---- */
+  .ax-bar-row {
+    grid-template-columns: 1fr !important;
+    gap: 6px;
+  }
+  .ax-bar-track { height: 14px; }   /* chunkier touch-visible bars */
+
+  /* ---- Tables become glass cards ---- */
+  .ax-table { font-size: .82rem; }
+  .ax-table th, .ax-table td { padding: 11px 12px !important; }
+
+  /* ---- Timeline: bigger dots for touch ---- */
+  .ax-timeline li::before {
+    width: 14px; height: 14px;
+    border-width: 3px;
+  }
+
+  /* ---- Eval overlay: glass box ---- */
+  .ax-eval-box {
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+    background: linear-gradient(180deg, rgba(14,20,36,.9), rgba(9,14,23,.94)) !important;
+    padding: 28px 24px 24px !important;
+  }
+  .ax-eval-overlay {
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+  }
+
+  /* ---- Chat widget: glass panel ---- */
+  #axChatPanel {
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+    background: linear-gradient(180deg, rgba(13,18,32,.9), rgba(9,14,23,.94)) !important;
+    right: 10px; left: 10px; width: auto; bottom: 80px;
+    border-radius: 22px !important;
+  }
+  #axChatFab {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(140,164,255,.35) !important;
+    box-shadow: 0 6px 24px -4px rgba(109,139,255,.6),
+                inset 0 1px 0 rgba(255,255,255,.25) !important;
+  }
+
+  /* ---- Stepper: bigger dots ---- */
+  .ax-step .ax-step-dot { width: 38px; height: 38px; font-size: 1rem; }
+  .ax-step .ax-step-label { font-size: .74rem; }
+
+  /* ---- Section icons: glass chips ---- */
+  .ax-section .ax-section-icon {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(109,139,255,.12);
+  }
+
+  /* ---- Viewport-based typography ---- */
+  h1 { font-size: clamp(1.3rem, 6vw, 1.7rem) !important; }
+  .ax-dh-title { font-size: clamp(1.15rem, 5.5vw, 1.5rem) !important; }
+  body { font-size: 15.5px; }
+
+  /* ---- Safe-area padding (iPhone notch) ---- */
+  .ax-main {
+    padding: 4.4rem max(1rem, env(safe-area-inset-left)) 5rem max(1rem, env(safe-area-inset-right)) !important;
+  }
+  .ax-flash-stack {
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    left: max(12px, env(safe-area-inset-left));
+    max-width: none;
+  }
+  #axChatFab {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+/* ---- Mobile: swipe-friendly tap targets, no accidental selection ---- */
+@media (max-width: 900px) {
+  .ax-navlink, .ax-btn, details.ax-details > summary {
+    -webkit-tap-highlight-color: rgba(109,139,255,.15);
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  details.ax-details > summary { min-height: 52px; }
+  a { -webkit-tap-highlight-color: rgba(109,139,255,.12); }
+}

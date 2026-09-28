@@ -11,17 +11,23 @@
 </head>
 <body>
   {% if current_user %}
+  <button class="ax-nav-toggle" onclick="document.body.classList.toggle('ax-nav-open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="ax-nav-backdrop" onclick="document.body.classList.remove('ax-nav-open')"></div>
   <div class="ax-shell">
     <aside class="ax-sidenav">
       <div class="ax-brand"><span>ASSUREX</span><b>Claim Engine</b></div>
       <nav class="ax-nav">
         {% for endpoint, label, icon in nav_items %}
         <a class="ax-navlink {{ 'active' if request.endpoint == endpoint else '' }}"
-           href="{{ url_for(endpoint) }}"><span>{{ icon }}</span><span>{{ label }}</span></a>
+           href="{{ url_for(endpoint) }}"
+           onclick="document.body.classList.remove('ax-nav-open')"><span>{{ icon }}</span><span>{{ label }}</span></a>
         {% endfor %}
       </nav>
       <div class="ax-user">
-        <a class="ax-navlink" href="{{ url_for('profile') }}"><span>🧑</span><span>My Profile</span></a>
+        <a class="ax-navlink" href="{{ url_for('profile') }}"
+           onclick="document.body.classList.remove('ax-nav-open')"><span>🧑</span><span>My Profile</span></a>
         <div><b>{{ current_user.name }}</b></div>
         <div class="role">{{ current_user.role.replace('_', ' ')|title }}</div>
         <form method="post" action="{{ url_for('logout') }}">
@@ -71,13 +77,12 @@
         <div class="ax-eval-step" data-step="5"><span class="ax-eval-icon">6</span>Comparing models &amp; fraud analysis</div>
         <div class="ax-eval-step" data-step="6"><span class="ax-eval-icon">7</span>Finalizing decision</div>
       </div>
-      <div class="ax-eval-bar"><div class="ax-eval-bar-fill" id="evalBar"></div></div>
+      <div class="ax-eval-bar"><div class="ax-bar-fill" id="evalBar"></div></div>
       <div class="ax-eval-note">Dual-model evaluation — usually under one second</div>
     </div>
   </div>
 
-  <script src="{{ url_for('static', filename='csrf.js') }}"></script>
-    {% if current_user and current_user.role in ('customer', 'service_center') %}
+  {% if current_user and current_user.role in ('customer', 'service_center') %}
   <div id="axChatFab" onclick="toggleChat()" title="Help Assistant">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -87,14 +92,14 @@
   <div id="axChatPanel">
     <div id="axChatHeader">
       <div>
-        <b>💬 AssureX Help</b>
+        <b>AssureX Help</b>
         <div style="font-size:.68rem; opacity:.7;">Guidance only — decisions are made by the AI evaluation system</div>
       </div>
       <button onclick="toggleChat()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.2rem;">×</button>
     </div>
     <div id="axChatMessages"></div>
     <div id="axChatDisclaimer">
-      (NOTICE) This assistant provides navigation help and presents stored claim information. It does not make, predict, or influence claim decisions.
+      This assistant provides navigation help and presents stored claim information. It does not make, predict, or influence claim decisions.
     </div>
     <form id="axChatForm" onsubmit="return sendChat(event)">
       <input type="text" id="axChatInput" placeholder="Ask how to use AssureX..." autocomplete="off">
@@ -102,8 +107,10 @@
     </form>
   </div>
   {% endif %}
+
+  <script src="{{ url_for('static', filename='csrf.js') }}"></script>
   <script src="{{ url_for('static', filename='eval_overlay.js') }}"></script>
-    <script src="{{ url_for('static', filename='chat.js') }}"></script>
-    <script src="{{ url_for('static', filename='ax-enhance.js') }}"></script>
+  <script src="{{ url_for('static', filename='chat.js') }}"></script>
+  <script src="{{ url_for('static', filename='ax-enhance.js') }}"></script>
 </body>
 </html>
