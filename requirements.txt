@@ -9,3 +9,4 @@ gunicorn
 firebase-admin
 joblib
 pytesseract
+ai-edge-litert
